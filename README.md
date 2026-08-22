@@ -80,3 +80,22 @@ npm start
 ## 📄 ใบอนุญาต (License)
 
 MIT License - พัฒนาโดย [tukimtk-design](https://github.com/tukimtk-design)
+
+---
+
+## 🚀 Phase 7 Features
+
+### Auto-Launch on Windows
+If the CDP connection fails on Windows, the system will attempt to automatically launch Chrome/Edge with the correct remote debugging port to provide a seamless 1-click experience.
+
+### Playwright E2E Mocks
+You can run the mocked E2E flows via:
+```bash
+npm test
+```
+
+### Openworker Auto-Installer
+Run the PowerShell script to build the project and generate the MCP config:
+```powershell
+.\scripts\install-openworker-mcp.ps1
+```

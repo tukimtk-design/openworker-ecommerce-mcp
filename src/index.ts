@@ -208,6 +208,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             action: { type: "string", enum: ["get", "set", "list"] },
             key: { type: "string" },
             selector: { type: "string" },
+            selectors: {
+              type: "array",
+              items: { type: "string" }
+            }
           },
           required: ["action"],
         },
