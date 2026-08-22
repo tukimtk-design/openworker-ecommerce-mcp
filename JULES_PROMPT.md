@@ -7,7 +7,7 @@
 
 ## 🎯 เป้าหมายของโปรเจกต์ (Project Goal)
 
-พัฒนา **MCP Server** สำหรับให้ **Openworker** สามารถสั่งงาน Chrome หรือ Microsoft Edge ของผู้ใช้เพื่อบริหารจัดการและอัปเดตข้อมูลสินค้าบน **Shopee, TikTok Shop และ Lazada** ได้อย่างรวดเร็ว แม่นยำ และปลอดภัย
+พัฒนา **MCP Server** สำหรับให้ **Openworker** สามารถสั่งงาน Chrome หรือ Microsoft Edge ของผู้ใช้เพื่อบริหารจัดการและอัปเดตข้อมูลสินค้าบน **Shopee, TikTok Shop และ Lazada** ได้อย่างรวดเร็ว แม่นยำ ปลอดภัย และ**ลดการสิ้นเปลือง Token ด้วย Smart Recipe Engine**
 
 ---
 
@@ -36,7 +36,7 @@
 3. พัฒนา `src/tools/safety-guard.ts`:
    - MCP Tool `ecommerce_safety_guard`: ตรวจสอบความถูกต้องของราคาและสต็อกก่อนส่งคำสั่ง Save (เช่น เตือนเมื่อราคาสินค้าลดลงเกิน 50%)
 
-### Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools (Issue #4 - New!)
+### Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools (Issue #4)
 1. พัฒนา `src/tools/browser-challenge.ts`:
    - MCP Tool `browser_detect_challenge`: สแกนหา Captcha/OTP และส่งสัญญาณแจ้งเตือนมนุษย์
 2. พัฒนา `src/tools/store-metrics.ts`:
@@ -45,6 +45,13 @@
    - MCP Tool `ecommerce_batch_update_price_stock`: อัปเดตสินค้าครั้งละหลายรายการพร้อม Throttling
 4. พัฒนา `src/tools/audit-log.ts`:
    - MCP Tool `ecommerce_audit_log`: บันทึกประวัติการเปลี่ยนราคาสินค้าเพื่อตรวจสอบย้อนหลัง
+
+### Phase 5: Smart Workflow Recipe Engine & Token Saver Tools (Issue #5 - ✨ New!)
+1. พัฒนา `src/services/recipe-runner.ts` & `src/tools/ecommerce-recipe.ts`:
+   - MCP Tool `ecommerce_run_recipe`: รันสคริปต์สำเร็จรูปด้วย Parameter ลดการส่ง Prompt สคริปต์ยาวๆ ซ้ำซ้อน (ลด Token >95%)
+2. พัฒนา `ecommerce_list_recipes`: แสดงรายการพารามิเตอร์ของ Recipe ทั้งหมด
+3. พัฒนา `ecommerce_save_custom_recipe`: บันทึก Custom Macro จาก AI
+4. พัฒนา `ecommerce_cached_selector_map`: ตัวจัดการ Selector Cache สำหรับแก้ปัญหา UI ปรับปรุง
 
 ---
 
@@ -60,6 +67,6 @@
 
 ## 📬 ขั้นตอนการส่งงาน (Work Delivery Process)
 
-1. สร้าง Branch ใหม่ตามชื่อฟีเจอร์ เช่น `feature/cdp-connection` หรือ `feature/ecommerce-tools`
+1. สร้าง Branch ใหม่ตามชื่อฟีเจอร์ เช่น `feature/recipe-engine` หรือ `feature/ecommerce-tools`
 2. เมื่อเขียนโค้ดและทดสอบผ่าน `npm run build` สำเร็จแล้ว ให้ทำการ Commit และเปิด Pull Request (PR) มายัง `main`
 3. Controller Agent (Cowork) จะทำการ Review, Test และ Merge เข้าสู่ branch หลักเพื่อเตรียม Deploy ต่อไป

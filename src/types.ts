@@ -56,3 +56,16 @@ export interface AuditLogEntry {
   newStock?: number;
   updatedBy: string;
 }
+
+export interface RecipeStep {
+  action: string;
+  target?: string;
+  value?: string;
+}
+
+export interface CustomRecipe {
+  recipeId: string;
+  description: string;
+  platform: Platform;
+  steps: RecipeStep[];
+}

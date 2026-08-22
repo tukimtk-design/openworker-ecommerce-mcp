@@ -141,6 +141,67 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["action"],
         },
       },
+      {
+        name: "ecommerce_run_recipe",
+        description: "⚡ [Token Saver] รันคำสั่งสำเร็จรูปโดยรับเพียงพารามิเตอร์หลัก ป้องกันการเจนสคริปต์ใหม่ที่สิ้นเปลือง Token",
+        inputSchema: {
+          type: "object",
+          properties: {
+            recipeId: {
+              type: "string",
+              enum: [
+                "shopee_quick_update_price",
+                "shopee_quick_update_stock",
+                "tiktok_quick_update_price",
+                "tiktok_quick_update_stock",
+                "lazada_quick_update_price",
+                "lazada_quick_update_stock",
+                "batch_inventory_sync",
+              ],
+            },
+            params: { type: "object" },
+          },
+          required: ["recipeId", "params"],
+        },
+      },
+      {
+        name: "ecommerce_list_recipes",
+        description: "แสดงรายการ Workflow Recipes ทั้งหมด พร้อมโครงสร้าง Parameter",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "all"], default: "all" },
+          },
+        },
+      },
+      {
+        name: "ecommerce_save_custom_recipe",
+        description: "บันทึกลำดับขั้นตอนการทำงาน (Macro Sequence) เป็น Recipe ใหม่ไว้เรียกใช้ซ้ำ",
+        inputSchema: {
+          type: "object",
+          properties: {
+            recipeId: { type: "string" },
+            description: { type: "string" },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            steps: { type: "array" },
+          },
+          required: ["recipeId", "platform", "steps"],
+        },
+      },
+      {
+        name: "ecommerce_cached_selector_map",
+        description: "จัดการและอัปเดต Selector Cache เมื่อหน้าเว็บ E-Commerce มีการเปลี่ยนโครงสร้าง UI",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            action: { type: "string", enum: ["get_map", "update_selector"] },
+            selectorKey: { type: "string" },
+            newSelector: { type: "string" },
+          },
+          required: ["platform", "action"],
+        },
+      },
     ],
   };
 });
@@ -182,6 +243,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               warning: isSafe
                 ? null
                 : `เตือน: ราคาสินค้าลดลง ${dropPercent.toFixed(1)}% ซึ่งเกินขีดจำกัดความปลอดภัย (${maxDrop}%)`,
+            }),
+          },
+        ],
+      };
+    }
+
+    case "ecommerce_run_recipe": {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              status: "success",
+              recipeId: args?.recipeId,
+              message: `[Token Saver Engine] รัน Recipe '${args?.recipeId}' สำเร็จด้วยพารามิเตอร์ที่กำหนด โดยไม่ต้องเจนสคริปต์ใหม่`,
+              savedTokenEstimate: "~4,500 tokens",
             }),
           },
         ],

@@ -25,7 +25,7 @@
 
 ---
 
-## 🔴 Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools (✨ เพิ่มเติม)
+## 🔴 Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools
 - [ ] **Task 4.1**: พัฒนา `src/tools/browser-challenge.ts` สำหรับสแกน Captcha/OTP และแจ้งเตือนมนุษย์ (`browser_detect_challenge`)
 - [ ] **Task 4.2**: พัฒนา `src/tools/store-metrics.ts` สรุปออเดอร์ค้างและสินค้าสต็อกหมด (`ecommerce_get_store_metrics`)
 - [ ] **Task 4.3**: พัฒนา `src/tools/batch-update.ts` รองรับการอัปเดตสินค้าครั้งละหลายรายการพร้อม Throttling (`ecommerce_batch_update_price_stock`)
@@ -33,7 +33,15 @@
 
 ---
 
-## 🟣 Phase 5: Integration, Build & CI/CD
-- [ ] **Task 5.1**: รวมทุก Tools ไว้ใน `src/index.ts` และทดสอบ `npm run build`
-- [ ] **Task 5.2**: เขียน Unit Tests ใน `src/**/*.test.ts`
-- [ ] **Task 5.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller
+## ⚡ Phase 5: Smart Workflow Recipe Engine & Token Saver Tools (✨ ใหม่)
+- [ ] **Task 5.1**: พัฒนา `src/services/recipe-runner.ts` และ `src/tools/ecommerce-recipe.ts` สำหรับรันคำสั่งสำเร็จรูป (`ecommerce_run_recipe`) ลด Token >95%
+- [ ] **Task 5.2**: พัฒนาระบบแสดงรายการพารามิเตอร์ของ Recipe (`ecommerce_list_recipes`)
+- [ ] **Task 5.3**: พัฒนาระบบบันทึก Macro / Custom Recipe จาก AI (`ecommerce_save_custom_recipe`)
+- [ ] **Task 5.4**: พัฒนา Dictionary สำหรับจัดการ Selector Cache (`ecommerce_cached_selector_map`)
+
+---
+
+## 🟣 Phase 6: Integration, Build & CI/CD
+- [ ] **Task 6.1**: รวมทุก Tools ทั้งหมดใน `src/index.ts` และทดสอบ `npm run build`
+- [ ] **Task 6.2**: เขียน Unit Tests สำหรับ Recipes และ Tools ใน `src/**/*.test.ts`
+- [ ] **Task 6.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller

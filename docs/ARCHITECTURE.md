@@ -8,7 +8,7 @@
 |  (User AI Client) |                        |  (Node.js / TypeScript Server)  |
 +-------------------+                        +----------------------------------+
                                                               |
-                                                    CDP (Port 9222)
+                                                    CDP (Port 9222) / API
                                                               |
                                                               v
                                              +----------------------------------+
@@ -104,7 +104,7 @@
 
 ---
 
-### Tool 6: `browser_detect_challenge` (✨ เพิ่มเติม)
+### Tool 6: `browser_detect_challenge`
 * **Description**: สแกนหา Captcha, OTP Modal หรือ Security Challenge บน Tab ที่เปิดอยู่ และส่งสัญญาณแจ้งเตือนเมื่อต้องการให้มนุษย์ช่วยแก้หน้าจอ
 * **Input Schema**:
   ```json
@@ -119,7 +119,7 @@
 
 ---
 
-### Tool 7: `ecommerce_get_store_metrics` (✨ เพิ่มเติม)
+### Tool 7: `ecommerce_get_store_metrics`
 * **Description**: สรุปข้อมูลสำคัญของร้านค้า เช่น จำนวนออเดอร์ที่รอจัดส่ง (Pending Orders) และรายการ SKU ที่สต็อกกำลังหมด
 * **Input Schema**:
   ```json
@@ -134,7 +134,7 @@
 
 ---
 
-### Tool 8: `ecommerce_batch_update_price_stock` (✨ เพิ่มเติม)
+### Tool 8: `ecommerce_batch_update_price_stock`
 * **Description**: อัปเดตราคาและสต็อกแบบหลายรายการ (Batch) พร้อมระบบใส่ความหน่วงสุ่ม (Anti-Rate-Limit Delay)
 * **Input Schema**:
   ```json
@@ -162,7 +162,7 @@
 
 ---
 
-### Tool 9: `ecommerce_audit_log` (✨ เพิ่มเติม)
+### Tool 9: `ecommerce_audit_log`
 * **Description**: บันทึกประวัติการเปลี่ยนแปลงราคาสินค้า/สต็อก ย้อนหลัง เพื่อตรวจสอบและ Rollback
 * **Input Schema**:
   ```json
@@ -174,5 +174,98 @@
       "limit": { "type": "number", "default": 20 }
     },
     "required": ["action"]
+  }
+  ```
+
+---
+
+## ⚡ Phase 5: Smart Recipe & Token Saver Tools (✨ เพิ่มเติมใหม่)
+
+### Tool 10: `ecommerce_run_recipe` (ลด Token >95%)
+* **Description**: รันชุดคำสั่งสำเร็จรูป (Pre-compiled Recipe) โดยรับเพียง Parameter สำคัญ ไม่ต้องให้ AI สร้าง Script ใหม่ทุกครั้ง
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "recipeId": { 
+        "type": "string", 
+        "enum": [
+          "shopee_quick_update_price",
+          "shopee_quick_update_stock",
+          "tiktok_quick_update_price",
+          "tiktok_quick_update_stock",
+          "lazada_quick_update_price",
+          "lazada_quick_update_stock",
+          "batch_inventory_sync"
+        ] 
+      },
+      "params": {
+        "type": "object",
+        "description": "พารามิเตอร์สำหรับ Recipe เช่น { skuId: 'SKU-001', price: 199 }"
+      }
+    },
+    "required": ["recipeId", "params"]
+  }
+  ```
+
+---
+
+### Tool 11: `ecommerce_list_recipes`
+* **Description**: คืนค่ารายการ Workflow Recipes ทั้งหมดที่มี พร้อมคำอธิบายและพารามิเตอร์ที่ต้องการ เพื่อให้ AI เลือกใช้ได้ทันทีโดยไม่ต้องคาดเดา
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "all"], "default": "all" }
+    }
+  }
+  ```
+
+---
+
+### Tool 12: `ecommerce_save_custom_recipe`
+* **Description**: บันทึกลำดับการทำงาน (Macro Sequence) ที่ AI เคยทำสำเร็จไว้เป็น Recipe ใหม่ เพื่อดึงกลับมาใช้ซ้ำในอนาคตโดยไม่ต้องเจนสคริปต์ใหม่
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "recipeId": { "type": "string" },
+      "description": { "type": "string" },
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string" },
+            "target": { "type": "string" },
+            "value": { "type": "string" }
+          },
+          "required": ["action"]
+        }
+      }
+    },
+    "required": ["recipeId", "platform", "steps"]
+  }
+  ```
+
+---
+
+### Tool 13: `ecommerce_cached_selector_map`
+* **Description**: จัดการและอัปเดต Dictionary ของ CSS/XPath Selectors และ API Signatures ของแต่แพลตฟอร์ม เมื่อเว็บมีการปรับเปลี่ยน UI เพื่อไม่ให้กระทบ Recipe ที่บันทึกไว้
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
+      "action": { "type": "string", "enum": ["get_map", "update_selector"] },
+      "selectorKey": { "type": "string" },
+      "newSelector": { "type": "string" }
+    },
+    "required": ["platform", "action"]
   }
   ```
