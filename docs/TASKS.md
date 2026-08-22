@@ -33,15 +33,24 @@
 
 ---
 
-## ⚡ Phase 5: Smart Workflow Recipe Engine & Token Saver Tools (✨ ใหม่)
-- [ ] **Task 5.1**: พัฒนา `src/services/recipe-runner.ts` และ `src/tools/ecommerce-recipe.ts` สำหรับรันคำสั่งสำเร็จรูป (`ecommerce_run_recipe`) ลด Token >95%
+## ⚡ Phase 5: Smart Workflow Recipe Engine (Token Saver Level 1)
+- [ ] **Task 5.1**: พัฒนา `src/services/recipe-runner.ts` และ `src/tools/ecommerce-recipe.ts` สำหรับรันคำสั่งสำเร็จรูป (`ecommerce_run_recipe`)
 - [ ] **Task 5.2**: พัฒนาระบบแสดงรายการพารามิเตอร์ของ Recipe (`ecommerce_list_recipes`)
 - [ ] **Task 5.3**: พัฒนาระบบบันทึก Macro / Custom Recipe จาก AI (`ecommerce_save_custom_recipe`)
 - [ ] **Task 5.4**: พัฒนา Dictionary สำหรับจัดการ Selector Cache (`ecommerce_cached_selector_map`)
 
 ---
 
-## 🟣 Phase 6: Integration, Build & CI/CD
-- [ ] **Task 6.1**: รวมทุก Tools ทั้งหมดใน `src/index.ts` และทดสอบ `npm run build`
-- [ ] **Task 6.2**: เขียน Unit Tests สำหรับ Recipes และ Tools ใน `src/**/*.test.ts`
-- [ ] **Task 6.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller
+## 💎 Phase 6: Advanced Capabilities & Context Compression Engine (Token Saver Level 2 - ✨ ใหม่)
+- [ ] **Task 6.1**: พัฒนา `src/services/dom-compressor.ts` สำหรับบีบอัด DOM/HTML หน้าเว็บเหลือเฉพาะ Micro-JSON (<100 tokens) (`ecommerce_context_compressor`)
+- [ ] **Task 6.2**: พัฒนา `src/services/sqlite-store.ts` และ `src/tools/local-cache.ts` สำหรับอ่าน/เขียนแคชสินค้าและออเดอร์ในเครื่อง (`ecommerce_local_sqlite_cache`)
+- [ ] **Task 6.3**: พัฒนา `src/tools/diff-update.ts` รองรับการอัปเดตเฉพาะค่าส่วนต่าง Delta (`ecommerce_smart_diff_update`)
+- [ ] **Task 6.4**: พัฒนา `src/services/hybrid-executor.ts` ระบบสลับเส้นทางรันอัตโนมัติ (Fast API -> CDP -> Human) (`ecommerce_hybrid_executor`)
+- [ ] **Task 6.5**: พัฒนา `src/tools/telemetry.ts` ระบบติดตามสถิติและปริมาณ Token ที่ประหยัดได้ (`ecommerce_token_telemetry`)
+
+---
+
+## 🟣 Phase 7: Final Integration, Build & CI/CD
+- [ ] **Task 7.1**: รวมทุก Tools ทั้งหมดใน `src/index.ts` และทดสอบ `npm run build`
+- [ ] **Task 7.2**: เขียน Unit Tests สำหรับทุก Tools ใน `src/**/*.test.ts`
+- [ ] **Task 7.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller

@@ -7,7 +7,7 @@
 
 ## 🎯 เป้าหมายของโปรเจกต์ (Project Goal)
 
-พัฒนา **MCP Server** สำหรับให้ **Openworker** สามารถสั่งงาน Chrome หรือ Microsoft Edge ของผู้ใช้เพื่อบริหารจัดการและอัปเดตข้อมูลสินค้าบน **Shopee, TikTok Shop และ Lazada** ได้อย่างรวดเร็ว แม่นยำ ปลอดภัย และ**ลดการสิ้นเปลือง Token ด้วย Smart Recipe Engine**
+พัฒนา **MCP Server** สำหรับให้ **Openworker** สามารถสั่งงาน Chrome หรือ Microsoft Edge ของผู้ใช้เพื่อบริหารจัดการและอัปเดตข้อมูลสินค้าบน **Shopee, TikTok Shop และ Lazada** ได้อย่างรวดเร็ว แม่นยำ ปลอดภัย และ**ลดการสิ้นเปลือง Token ถึงขีดสุดด้วย Recipe & Compression Engine**
 
 ---
 
@@ -16,42 +16,31 @@
 โปรดดำเนินการตามลำดับใน `docs/TASKS.md`:
 
 ### Phase 1: Core Infra & CDP Attachment (Issue #1)
-1. พัฒนา `src/services/cdp-connection.ts`:
-   - ใช้ `playwright` หรือ `puppeteer-core` เพื่อเชื่อมต่อกับ `http://localhost:9222` ผ่าน CDP (`connectOverCDP`)
-   - สร้างฟังก์ชันค้นหา Active Tab ของ Shopee Seller Centre (`seller.shopee.co.th`), TikTok Shop Seller Center (`seller-th.tiktok.com`), และ Lazada Seller Center (`sellercenter.lazada.co.th`)
-2. พัฒนา `src/tools/browser-profile.ts`:
-   - พัฒนา MCP Tool `browser_attach_existing` เพื่อตรวจเช็คสถานะการเชื่อมต่อ และส่งคืนรายชื่อ Tab ร้านค้าที่เปิดล็อกอินอยู่
+- พัฒนา `src/services/cdp-connection.ts` และ `src/tools/browser-profile.ts` (`browser_attach_existing`)
 
 ### Phase 2: Session Extractor & API Interceptor (Issue #2)
-1. พัฒนา `src/services/session-extractor.ts`:
-   - ดึง Cookies, CSRF Tokens (`x-csrf-token`), และ Authorization Bearer จาก Tab ร้านค้าที่เปิดอยู่
-2. พัฒนา `src/services/api-client.ts`:
-   - สร้าง HTTP Client สำหรับส่งคำสั่งไปยัง Internal REST/GraphQL Endpoints ของแต่ละแพลตฟอร์มเพื่อแก้ไขราคาสินค้าและสต็อกโดยตรง
+- พัฒนา `src/services/session-extractor.ts` และ `src/services/api-client.ts` (`ecommerce_extract_session`)
 
 ### Phase 3: High-Level MCP Tools (Issue #3)
-1. พัฒนา `src/tools/ecommerce-search.ts`:
-   - MCP Tool `ecommerce_product_search`: ค้นหาสินค้าจาก SKU ID, Item ID หรือชื่อสินค้า
-2. พัฒนา `src/tools/ecommerce-update.ts`:
-   - MCP Tool `ecommerce_update_price_stock`: ปรับเปลี่ยนราคาสินค้าและจำนวนสต็อกแยกตาม Variant SKU
-3. พัฒนา `src/tools/safety-guard.ts`:
-   - MCP Tool `ecommerce_safety_guard`: ตรวจสอบความถูกต้องของราคาและสต็อกก่อนส่งคำสั่ง Save (เช่น เตือนเมื่อราคาสินค้าลดลงเกิน 50%)
+- พัฒนา `src/tools/ecommerce-search.ts`, `src/tools/ecommerce-update.ts`, `src/tools/safety-guard.ts`
 
 ### Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools (Issue #4)
-1. พัฒนา `src/tools/browser-challenge.ts`:
-   - MCP Tool `browser_detect_challenge`: สแกนหา Captcha/OTP และส่งสัญญาณแจ้งเตือนมนุษย์
-2. พัฒนา `src/tools/store-metrics.ts`:
-   - MCP Tool `ecommerce_get_store_metrics`: ดึงสรุปออเดอร์ค้างและสินค้าสต็อกหมด
-3. พัฒนา `src/tools/batch-update.ts`:
-   - MCP Tool `ecommerce_batch_update_price_stock`: อัปเดตสินค้าครั้งละหลายรายการพร้อม Throttling
-4. พัฒนา `src/tools/audit-log.ts`:
-   - MCP Tool `ecommerce_audit_log`: บันทึกประวัติการเปลี่ยนราคาสินค้าเพื่อตรวจสอบย้อนหลัง
+- พัฒนา `src/tools/browser-challenge.ts`, `src/tools/store-metrics.ts`, `src/tools/batch-update.ts`, `src/tools/audit-log.ts`
 
-### Phase 5: Smart Workflow Recipe Engine & Token Saver Tools (Issue #5 - ✨ New!)
-1. พัฒนา `src/services/recipe-runner.ts` & `src/tools/ecommerce-recipe.ts`:
-   - MCP Tool `ecommerce_run_recipe`: รันสคริปต์สำเร็จรูปด้วย Parameter ลดการส่ง Prompt สคริปต์ยาวๆ ซ้ำซ้อน (ลด Token >95%)
-2. พัฒนา `ecommerce_list_recipes`: แสดงรายการพารามิเตอร์ของ Recipe ทั้งหมด
-3. พัฒนา `ecommerce_save_custom_recipe`: บันทึก Custom Macro จาก AI
-4. พัฒนา `ecommerce_cached_selector_map`: ตัวจัดการ Selector Cache สำหรับแก้ปัญหา UI ปรับปรุง
+### Phase 5: Smart Workflow Recipe Engine (Issue #5)
+- พัฒนา `src/tools/ecommerce-recipe.ts` (`ecommerce_run_recipe`, `ecommerce_list_recipes`, `ecommerce_save_custom_recipe`, `ecommerce_cached_selector_map`)
+
+### Phase 6: Advanced Capabilities & Context Compression Engine (Issue #6 - ✨ New!)
+1. พัฒนา `src/services/dom-compressor.ts` & `src/tools/compressor.ts`:
+   - `ecommerce_context_compressor`: บีบอัด DOM หน้าเว็บเหลือ Micro-JSON (<100 tokens)
+2. พัฒนา `src/services/sqlite-store.ts` & `src/tools/local-cache.ts`:
+   - `ecommerce_local_sqlite_cache`: ฐานข้อมูลแคชสินค้าและออเดอร์ในเครื่อง อ่านข้อมูลได้ทันทีโดยไม่ต้องเปิดเว็บ
+3. พัฒนา `src/tools/diff-update.ts`:
+   - `ecommerce_smart_diff_update`: อัปเดตข้อมูลเฉพาะส่วนต่าง Delta (เช่น deltaStock: -2)
+4. พัฒนา `src/services/hybrid-executor.ts`:
+   - `ecommerce_hybrid_executor`: Fast API -> CDP Fallback -> Human Alert
+5. พัฒนา `src/tools/telemetry.ts`:
+   - `ecommerce_token_telemetry`: Dashboard ติดตามการประหยัด Token และประสิทธิภาพ
 
 ---
 
@@ -67,6 +56,6 @@
 
 ## 📬 ขั้นตอนการส่งงาน (Work Delivery Process)
 
-1. สร้าง Branch ใหม่ตามชื่อฟีเจอร์ เช่น `feature/recipe-engine` หรือ `feature/ecommerce-tools`
+1. สร้าง Branch ใหม่ตามชื่อฟีเจอร์ เช่น `feature/compression-engine` หรือ `feature/local-cache`
 2. เมื่อเขียนโค้ดและทดสอบผ่าน `npm run build` สำเร็จแล้ว ให้ทำการ Commit และเปิด Pull Request (PR) มายัง `main`
 3. Controller Agent (Cowork) จะทำการ Review, Test และ Merge เข้าสู่ branch หลักเพื่อเตรียม Deploy ต่อไป
