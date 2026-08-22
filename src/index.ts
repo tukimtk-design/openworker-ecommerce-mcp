@@ -1,3 +1,5 @@
+import { handleEcommerceMatchVariants } from "./tools/variant-matcher.js";
+import { handleEcommerceSyncMultiplatformStock } from "./tools/multiplatform-sync.js";
 import { handleEcommerceContextCompressor } from "./tools/compressor.js";
 import { handleEcommerceLocalSqliteCache } from "./tools/local-cache.js";
 import { handleEcommerceSmartDiffUpdate } from "./tools/diff-update.js";
@@ -273,6 +275,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_match_variants",
+        description: "Fuzzy match product variants across platforms",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["match", "force_map"] },
+            sourceName: { type: "string" },
+            candidates: { type: "array" },
+            targetCandidate: { type: "object" }
+          },
+          required: ["action", "sourceName"]
+        }
+      },
+      {
+        name: "ecommerce_sync_multiplatform_stock",
+        description: "Sync stock and prices across multiple platforms",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sourcePlatform: { type: "string" },
+            sourceProductName: { type: "string" },
+            newStock: { type: "number" },
+            newPrice: { type: "number" },
+            targets: { type: "array" }
+          },
+          required: ["sourcePlatform", "sourceProductName", "targets"]
+        }
       }
     ],
   };
@@ -360,6 +391,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceHybridExecutor(args);
     case "ecommerce_token_telemetry":
       return await handleEcommerceTokenTelemetry(args);
+    case "ecommerce_match_variants":
+      return await handleEcommerceMatchVariants(args);
+    case "ecommerce_sync_multiplatform_stock":
+      return await handleEcommerceSyncMultiplatformStock(args);
     default:
       return {
         content: [

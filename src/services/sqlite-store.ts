@@ -25,12 +25,14 @@ export class SqliteStore {
     }
 
     private initDb() {
+
         this.db.serialize(() => {
             this.db.run("CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, value TEXT)");
             this.db.run("CREATE TABLE IF NOT EXISTS recipes (id TEXT PRIMARY KEY, data TEXT)");
             this.db.run("CREATE TABLE IF NOT EXISTS selector_cache (key TEXT PRIMARY KEY, data TEXT)");
             this.db.run("CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT)");
             this.db.run("CREATE TABLE IF NOT EXISTS telemetry_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT)");
+            this.db.run("CREATE TABLE IF NOT EXISTS variant_mappings (id TEXT PRIMARY KEY, data TEXT)");
         });
     }
 
