@@ -1,126 +1,62 @@
-# System Architecture & Tool Contracts
+# System Architecture & Non-Overlapping Hybrid Tool Contracts
 
-## 1. High-Level System Flow
+## 1. Hybrid Architecture & Tool Namespace Isolation
+
+เพื่อป้องกันไม่ให้ AI สับสนในการเลือกใช้ Tools ระหว่าง **lnwjud** (System & Browser Baseline) และ **openworker-ecommerce-mcp** (E-Commerce Domain Specialty):
+
+1. **lnwjud (System Capabilities Provider)**: รับผิดชอบงานระบบพื้นฐาน เช่น `file_*`, `git_*`, `shell_*`, `process_*`, `browser_*` (Playwright Generic), `dom_cdp`
+2. **openworker-ecommerce-mcp (Domain Specialty Provider)**: ทุก Tool ในโปรเจกต์นี้จะถูกกำหนด Prefix บังคับเป็น **`ecommerce_*`** เพื่อเจาะจงเฉพาะงาน Shopee, TikTok Shop และ Lazada เท่านั้น ห้ามใช้ชื่อซ้ำกับ `browser_*` ของ lnwjud
 
 ```
-+-------------------+      MCP Protocol      +----------------------------------+
-|    Openworker     | <--------------------> |  openworker-ecommerce-mcp        |
-|  (User AI Client) |                        |  (Node.js / TypeScript Server)  |
-+-------------------+                        +----------------------------------+
-                                                              |
-                                             +----------------+----------------+
-                                             |                                 |
-                                    CDP (Port 9222) / API             Local SQLite Cache
-                                             |                                 |
-                                             v                                 v
-                              +------------------------------+     +-----------------------+
-                              | User's Chrome / Edge Browser |     | Local Product Catalog |
-                              | - Shopee / TikTok / Lazada   |     | & Order Sync Database |
-                              +------------------------------+     +-----------------------+
++-----------------------------------------------------------------------------------+
+|                                   Openworker                                      |
+|                       (AI Agent Orchestrator & UI Layer)                          |
++-----------------------------------------------------------------------------------+
+                                         |
+               +-------------------------+-------------------------+
+               | (MCP Protocol)                                    | (MCP Protocol)
+               v                                                   v
++------------------------------------+             +------------------------------------+
+|          lnwjud Runtime            |             |     openworker-ecommerce-mcp       |
+|    - file_*, git_*, shell_*        |             |    - ecommerce_attach_store_browser|
+|    - process_*, browser_*          |             |    - ecommerce_extract_session     |
+|    - dom_cdp, accessibility        |             |    - ecommerce_detect_captcha      |
+|    - window, vision                |             |    - ecommerce_run_recipe          |
+|    (System Baseline Capabilities)  |             |    - ecommerce_context_compressor   |
++------------------------------------+             +------------------------------------+
 ```
 
 ---
 
-## 2. Complete MCP Tools Contract Specification
+## 2. Complete Non-Overlapping Tool Contract Specification (19 Tools)
 
-### Core Tools (Phase 1 - 4)
-* **`browser_attach_existing`**: เชื่อมต่อ Chrome/Edge Port 9222
-* **`ecommerce_extract_session`**: ดึง Auth Cookies/Tokens
-* **`ecommerce_product_search`**: ค้นหาสินค้าตาม SKU
-* **`ecommerce_update_price_stock`**: ปรับเปลี่ยนราคาและสต็อก
-* **`ecommerce_safety_guard`**: ตรวจสอบส่วนต่างราคากันผิดพลาด
-* **`browser_detect_challenge`**: ตรวจจับ Captcha/OTP และแจ้งเตือนมนุษย์
-* **`ecommerce_get_store_metrics`**: สรุปออเดอร์ค้างและสต็อกหมด
-* **`ecommerce_batch_update_price_stock`**: อัปเดตสินค้าแบบ Batch
-* **`ecommerce_audit_log`**: ประวัติการปรับเปลี่ยนย้อนหลัง
+### Phase 1: Core E-Commerce Browser Attachment
+* **`ecommerce_attach_store_browser`**: เชื่อมต่อ Chrome/Edge Port 9222 และระบุเฉพาะ Tab ร้านค้า Shopee, TikTok Shop, Lazada (ไม่ซ้ำกับ `browser_*` ทั่วไป)
 
----
+### Phase 2: Session Extraction & API Interception
+* **`ecommerce_extract_session`**: ดึง Auth Cookies, CSRF Tokens และ Bearer Tokens สำหรับยิง API ตรง
+* **`ecommerce_api_request_helper`**: Helper ส่งคำสั่งไปยัง Internal Seller Center API โดยตรง
 
-### Phase 5: Smart Recipe Engine (Token Saver Level 1)
+### Phase 3: High-Level Search, Update & Safety Guard
+* **`ecommerce_product_search`**: ค้นหาสินค้าและ SKU ในระบบหลังบ้านร้านค้า
+* **`ecommerce_update_price_stock`**: ปรับเปลี่ยนราคาและจำนวนสต็อก
+* **`ecommerce_safety_guard`**: ตรวจสอบขอบเขตส่วนต่างราคากันข้อผิดพลาด
+
+### Phase 4: Captcha, Metrics, Batch & Audit Logs
+* **`ecommerce_detect_captcha_challenge`**: สแกนหา Slide Captcha/OTP และแจ้งเตือนมนุษย์เมื่อต้องการการยืนยันตัวตน
+* **`ecommerce_get_store_metrics`**: สรุปจำนวนออเดอร์ค้างจัดส่งและ SKU สต็อกหมด
+* **`ecommerce_batch_update_price_stock`**: อัปเดตราคาและสต็อกแบบหลายรายการพร้อมระบบชะลอความเร็ว
+* **`ecommerce_audit_log`**: บันทึกและเรียกดูประวัติการเปลี่ยนแปลงราคาสินค้าย้อนหลัง
+
+### Phase 5: Smart Workflow Recipe Engine (Token Saver Level 1)
 * **`ecommerce_run_recipe`**: รันคำสั่งสำเร็จรูปโดยรับเพียง Parameter สั้นๆ (ลด Token >95%)
 * **`ecommerce_list_recipes`**: แสดงรายการ Recipes และ Parameter Schemas
 * **`ecommerce_save_custom_recipe`**: บันทึก Custom Macro จาก AI
 * **`ecommerce_cached_selector_map`**: แคช Selector ป้องกันปัญหา UI ปรับเปลี่ยน
 
----
-
-## 💎 Phase 6: Advanced Capabilities & Context Compression Engine (Token Saver Level 2 - ✨ ใหม่)
-
-### Tool 14: `ecommerce_context_compressor` (ลด Token อ่านหน้าเว็บ 98%)
-* **Description**: บีบอัดโครงสร้างหน้าเว็บ HTML/DOM หรือ Response ขนาดใหญ่ ให้เหลือเฉพาะข้อมูลสินค้า ราคา สต็อก และปุ่มกดที่จำเป็นในรูปแบบ Micro-JSON ขนาดเล็ก (< 100 tokens)
-* **Input Schema**:
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
-      "rawHtml": { "type": "string", "description": "Raw HTML หรือ DOM string (ถ้ามี)" }
-    }
-  }
-  ```
-
----
-
-### Tool 15: `ecommerce_local_sqlite_cache` (ศูนย์ข้อมูลสินค้าและออเดอร์ในเครื่อง)
-* **Description**: จัดเก็บและเรียกดูข้อมูลสินค้า สต็อก และออเดอร์ย้อนหลังจากฐานข้อมูล SQLite ภายในเครื่อง ช่วยให้ AI ตอบคำถามและอ่านสถานะร้านค้าได้ทันทีโดยไม่ต้องรันเบราว์เซอร์ไปแกะหน้าเว็บใหม่ทุกครั้ง
-* **Input Schema**:
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "action": { "type": "string", "enum": ["query_products", "query_low_stock", "sync_from_web"] },
-      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "all"], "default": "all" },
-      "filter": { "type": "string" }
-    },
-    "required": ["action"]
-  }
-  ```
-
----
-
-### Tool 16: `ecommerce_smart_diff_update` (Delta State Update)
-* **Description**: รับคำสั่งอัปเดตเฉพาะค่าส่วนต่าง (Delta) เช่น เพิ่ม/ลดสต็อก หรือปรับราคาขึ้น/ลง โดย AI ส่งเฉพาะค่าต่าง ไม่ต้องส่ง Payload เต็มรูปแบบ
-* **Input Schema**:
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
-      "skuId": { "type": "string" },
-      "deltaStock": { "type": "number", "description": "+10 หรือ -5" },
-      "deltaPrice": { "type": "number", "description": "+20 หรือ -10" }
-    },
-    "required": ["platform", "skuId"]
-  }
-  ```
-
----
-
-### Tool 17: `ecommerce_hybrid_executor` (Automatic Fallback Executor)
-* **Description**: ระบบสลับการทำงานอัตโนมัติ (Fast API -> CDP Automation -> Human Alert) ดำเนินการแก้ไขข้อมูลผ่านเส้นทางที่เร็วและใช้ Token น้อยที่สุดให้อัตโนมัติ
-* **Input Schema**:
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
-      "taskType": { "type": "string", "enum": ["update_price", "update_stock", "search"] },
-      "payload": { "type": "object" }
-    },
-    "required": ["platform", "taskType", "payload"]
-  }
-  ```
-
----
-
-### Tool 18: `ecommerce_token_telemetry` (Dashboard สรุปการประหยัด Token)
-* **Description**: รายงานสถิติปริมาณ Token ที่ประหยัดได้ เวลาที่ใช้ในการประมวลผล และอัตราความสำเร็จของระบบ
-* **Input Schema**:
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "timeframe": { "type": "string", "enum": ["today", "this_week", "all_time"], "default": "today" }
-    }
-  }
-  ```
+### Phase 6: Advanced Capabilities & Context Compression Engine (Token Saver Level 2)
+* **`ecommerce_context_compressor`**: บีบอัด DOM/HTML ขนาดใหญ่เหลือเฉพาะ Micro-JSON (<100 tokens, ลด Token 98%+)
+* **`ecommerce_local_sqlite_cache`**: อ่าน/เขียนข้อมูลสินค้าและออเดอร์จากฐานข้อมูลในเครื่อง
+* **`ecommerce_smart_diff_update`**: สั่งอัปเดตเฉพาะส่วนต่าง Delta (เช่น deltaStock: -2)
+* **`ecommerce_hybrid_executor`**: ระบบรันสลับเส้นทางให้อัตโนมัติ (Fast API -> CDP -> Human Alert)
+* **`ecommerce_token_telemetry`**: Dashboard ติดตามสถิติการประหยัด Token และประสิทธิภาพ

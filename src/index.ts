@@ -17,12 +17,12 @@ const server = new Server(
   }
 );
 
-// List available tools
+// List available tools (Strict ecommerce_* Namespace to avoid overlaps with lnwjud)
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "browser_attach_existing",
+        name: "ecommerce_attach_store_browser",
         description: "ตรวจสอบการเชื่อมต่อ Chrome/Edge บนพอร์ต 9222 และแสดงรายการ Tab ร้านค้า Shopee/TikTok/Lazada",
         inputSchema: {
           type: "object",
@@ -40,6 +40,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
           },
           required: ["platform"],
+        },
+      },
+      {
+        name: "ecommerce_api_request_helper",
+        description: "ส่งคำสั่งโดยตรงไปยัง Internal Seller Center API ของแพลตฟอร์ม",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            endpoint: { type: "string" },
+            method: { type: "string", enum: ["GET", "POST", "PUT"], default: "POST" },
+            payload: { type: "object" },
+          },
+          required: ["platform", "endpoint"],
         },
       },
       {
@@ -83,7 +97,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "browser_detect_challenge",
+        name: "ecommerce_detect_captcha_challenge",
         description: "สแกนหา Captcha/OTP บน Tab ที่เปิดอยู่ และส่งสัญญาณแจ้งเตือนเมื่อต้องให้มนุษย์ปลดล็อกหน้าจอ",
         inputSchema: {
           type: "object",
@@ -151,6 +165,44 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             params: { type: "object" },
           },
           required: ["recipeId", "params"],
+        },
+      },
+      {
+        name: "ecommerce_list_recipes",
+        description: "แสดงรายการ Workflow Recipes ทั้งหมด พร้อมโครงสร้าง Parameter",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "all"], default: "all" },
+          },
+        },
+      },
+      {
+        name: "ecommerce_save_custom_recipe",
+        description: "บันทึกลำดับขั้นตอนการทำงาน (Macro Sequence) เป็น Recipe ใหม่ไว้เรียกใช้ซ้ำ",
+        inputSchema: {
+          type: "object",
+          properties: {
+            recipeId: { type: "string" },
+            description: { type: "string" },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            steps: { type: "array" },
+          },
+          required: ["recipeId", "platform", "steps"],
+        },
+      },
+      {
+        name: "ecommerce_cached_selector_map",
+        description: "จัดการและอัปเดต Selector Cache เมื่อหน้าเว็บ E-Commerce มีการเปลี่ยนโครงสร้าง UI",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            action: { type: "string", enum: ["get_map", "update_selector"] },
+            selectorKey: { type: "string" },
+            newSelector: { type: "string" },
+          },
+          required: ["platform", "action"],
         },
       },
       {
@@ -223,34 +275,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   switch (name) {
-    case "browser_attach_existing":
+    case "ecommerce_attach_store_browser":
       return {
         content: [
           {
             type: "text",
             text: JSON.stringify({
               status: "connected",
-              message: "พร้อมรับคำสั่งพัฒนาต่อจาก Jules (Google AI Agent)",
+              message: "พร้อมเชื่อมต่อเบราว์เซอร์ร้านค้า Shopee/TikTok/Lazada",
               tabs: [],
             }),
           },
         ],
       };
 
-    case "ecommerce_context_compressor": {
+    case "ecommerce_safety_guard": {
+      const current = Number(args?.currentPrice || 0);
+      const proposed = Number(args?.proposedPrice || 0);
+      const maxDrop = Number(args?.maxPriceDropPercent || 50);
+
+      const dropPercent = ((current - proposed) / current) * 100;
+      const isSafe = dropPercent <= maxDrop;
+
       return {
         content: [
           {
             type: "text",
             text: JSON.stringify({
-              status: "compressed",
-              tokensBefore: "~18,000 tokens",
-              tokensAfter: "~85 tokens",
-              savedRatio: "99.5%",
-              microJson: {
-                title: "Shopee Product Admin",
-                extractedSkusCount: 12,
-              },
+              isSafe,
+              dropPercent: Number(dropPercent.toFixed(2)),
+              warning: isSafe
+                ? null
+                : `เตือน: ราคาสินค้าลดลง ${dropPercent.toFixed(1)}% ซึ่งเกินขีดจำกัดความปลอดภัย (${maxDrop}%)`,
             }),
           },
         ],
