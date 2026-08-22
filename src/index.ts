@@ -53,8 +53,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            port: { type: "number", default: 9222 },
-          },
+            port: { type: "number", default: 9222 }
+          }
         },
       },
       {
@@ -145,11 +145,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   productId: { type: "string" },
                   skuId: { type: "string" },
                   newPrice: { type: "number" },
-                  newStock: { type: "number" },
+                  newStock: { type: "number" }
                 },
-                required: ["productId"],
-              },
-            },
+                required: ["productId"]
+              }
+            }
           },
           required: ["platform", "items"],
         },
@@ -174,7 +174,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: "object",
           properties: {
             recipeId: { type: "string" },
-            params: { type: "object" }
+            params: {
+              type: "object",
+              properties: { _dummy: { type: "string" } },
+              additionalProperties: { type: "string" }
+            }
           },
           required: ["recipeId"]
         }
@@ -184,7 +188,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description: "List all available workflow recipes",
         inputSchema: {
           type: "object",
-          properties: {}
+          properties: {
+             _dummy: { type: "string", description: "Dummy parameter to satisfy strict schema requirements" }
+          }
         }
       },
       {
@@ -199,8 +205,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     id: { type: "string" },
                     name: { type: "string" },
                     description: { type: "string" },
-                    steps: { type: "array" }
-                }
+                    steps: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                action: { type: "string" },
+                                selectorKey: { type: "string" },
+                                selector: { type: "string" },
+                                value: { type: "string" },
+                                delayMs: { type: "number" }
+                            },
+                            required: ["action"]
+                        }
+                    }
+                },
+                required: ["id", "name", "steps"]
             }
           },
           required: ["recipe"]
@@ -252,8 +272,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            currentState: { type: "object" },
-            targetState: { type: "object" }
+            currentState: { type: "object", properties: { _dummy: { type: "string" } }, additionalProperties: true },
+            targetState: { type: "object", properties: { _dummy: { type: "string" } }, additionalProperties: true }
           },
           required: ["currentState", "targetState"]
         }
@@ -264,7 +284,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            taskDetails: { type: "object" }
+            taskDetails: { type: "object", properties: { _dummy: { type: "string" } }, additionalProperties: true }
           },
           required: ["taskDetails"]
         }
@@ -291,8 +311,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             action: { type: "string", enum: ["match", "force_map"] },
             sourceName: { type: "string" },
-            candidates: { type: "array" },
-            targetCandidate: { type: "object" }
+            candidates: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        platform: { type: "string" },
+                        productId: { type: "string" },
+                        skuId: { type: "string" },
+                        name: { type: "string" }
+                    },
+                    required: ["platform", "productId", "skuId", "name"]
+                }
+            },
+            targetCandidate: {
+                type: "object",
+                properties: {
+                    platform: { type: "string" },
+                    productId: { type: "string" },
+                    skuId: { type: "string" },
+                    name: { type: "string" }
+                }
+            }
           },
           required: ["action", "sourceName"]
         }
@@ -307,7 +347,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             sourceProductName: { type: "string" },
             newStock: { type: "number" },
             newPrice: { type: "number" },
-            targets: { type: "array" }
+            targets: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        platform: { type: "string" },
+                        productId: { type: "string" },
+                        currentPrice: { type: "number" },
+                        currentStock: { type: "number" },
+                        availableVariants: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    platform: { type: "string" },
+                                    productId: { type: "string" },
+                                    skuId: { type: "string" },
+                                    name: { type: "string" }
+                                }
+                            }
+                        }
+                    },
+                    required: ["platform", "productId", "availableVariants"]
+                }
+            }
           },
           required: ["sourcePlatform", "sourceProductName", "targets"]
         }
@@ -393,7 +457,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             platform: { type: "string" },
             action: { type: "string", enum: ["list", "create", "update"] },
-            promoDetails: { type: "object" }
+            promoDetails: { type: "object", properties: { _dummy: { type: "string" } }, additionalProperties: true }
           },
           required: ["platform", "action"]
         }
