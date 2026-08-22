@@ -45,3 +45,10 @@
 - [x] **Task 7.2**: Mock E-Commerce Seller Portal Server (Playwright Mocking)
 - [x] **Task 7.3**: Persistent Data Storage Path & SQLite Auto-Migration
 - [x] **Task 7.4**: DOM Selector Auto-Healing Fallback
+
+---
+
+## 🟢 Phase 8: Multi-Platform Stock Sync & Variant Matching
+- [x] **Task 8.1**: Real-Time Multi-Platform Stock Sync Tool (`ecommerce_sync_multiplatform_stock`)
+- [x] **Task 8.2**: Fuzzy Variant Matching Tool (`ecommerce_match_variants`)
+- [x] **Task 8.3**: Integration & Unit Tests

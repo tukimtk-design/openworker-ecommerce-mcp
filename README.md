@@ -99,3 +99,13 @@ Run the PowerShell script to build the project and generate the MCP config:
 ```powershell
 .\scripts\install-openworker-mcp.ps1
 ```
+
+---
+
+## 🚀 Phase 8 Features
+
+### Multi-Platform Stock Sync
+Automatically synchronize stock and prices across Shopee, TikTok Shop, and Lazada. The system orchestrates safety bounds and logs operations.
+
+### Fuzzy Variant Matching
+The system uses string similarity (Levenshtein Distance) to match product variants that are named differently across platforms, leveraging SQLite to cache successful matches for immediate future retrievals.
