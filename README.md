@@ -109,3 +109,19 @@ Automatically synchronize stock and prices across Shopee, TikTok Shop, and Lazad
 
 ### Fuzzy Variant Matching
 The system uses string similarity (Levenshtein Distance) to match product variants that are named differently across platforms, leveraging SQLite to cache successful matches for immediate future retrievals.
+
+---
+
+## 🚀 Phase 9 Features (Enterprise)
+
+### Docker & Headless Run
+Deploy 24/7 on the cloud using the official Playwright Docker image with Xvfb:
+```bash
+docker-compose up -d
+```
+
+### Visual DOM Self-Correction
+Captures viewport screenshots and bounding boxes to allow AI to self-correct during unexpected DOM overlays.
+
+### Proxy Rotation
+Supports rotating proxies for multi-account isolation.
