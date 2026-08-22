@@ -1,3 +1,20 @@
+import { handleEcommerceContextCompressor } from "./tools/compressor.js";
+import { handleEcommerceLocalSqliteCache } from "./tools/local-cache.js";
+import { handleEcommerceSmartDiffUpdate } from "./tools/diff-update.js";
+import { handleEcommerceHybridExecutor } from "./tools/hybrid-executor-tool.js";
+import { handleEcommerceTokenTelemetry } from "./tools/telemetry.js";
+import { handleEcommerceRunRecipe, handleEcommerceListRecipes, handleEcommerceSaveCustomRecipe } from "./tools/ecommerce-recipe.js";
+import { handleEcommerceCachedSelectorMap } from "./tools/ecommerce-selectors.js";
+import { handleBrowserDetectChallenge } from "./tools/browser-challenge.js";
+import { handleEcommerceGetStoreMetrics } from "./tools/store-metrics.js";
+import { handleEcommerceBatchUpdatePriceStock } from "./tools/batch-update.js";
+import { handleEcommerceAuditLog } from "./tools/audit-log.js";
+import { handleEcommerceProductSearch } from "./tools/ecommerce-search.js";
+import { handleEcommerceUpdatePriceStock } from "./tools/ecommerce-update.js";
+import { handleEcommerceSafetyGuard } from "./tools/safety-guard.js";
+import { SessionExtractor } from "./services/session-extractor.js";
+import { CdpConnection } from "./services/cdp-connection.js";
+import { handleBrowserAttachExisting } from "./tools/browser-profile.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -141,6 +158,119 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["action"],
         },
       },
+      {
+        name: "ecommerce_run_recipe",
+        description: "Run a predefined workflow recipe",
+        inputSchema: {
+          type: "object",
+          properties: {
+            recipeId: { type: "string" },
+            params: { type: "object" }
+          },
+          required: ["recipeId"]
+        }
+      },
+      {
+        name: "ecommerce_list_recipes",
+        description: "List all available workflow recipes",
+        inputSchema: {
+          type: "object",
+          properties: {}
+        }
+      },
+      {
+        name: "ecommerce_save_custom_recipe",
+        description: "Save a custom macro recipe",
+        inputSchema: {
+          type: "object",
+          properties: {
+            recipe: {
+                type: "object",
+                properties: {
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    steps: { type: "array" }
+                }
+            }
+          },
+          required: ["recipe"]
+        }
+      },
+      {
+        name: "ecommerce_cached_selector_map",
+        description: "Manage cached DOM selectors",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["get", "set", "list"] },
+            key: { type: "string" },
+            selector: { type: "string" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_context_compressor",
+        description: "Compress DOM to micro-JSON",
+        inputSchema: {
+          type: "object",
+          properties: {
+            domString: { type: "string" }
+          },
+          required: ["domString"]
+        }
+      },
+      {
+        name: "ecommerce_local_sqlite_cache",
+        description: "Local SQLite caching",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["get", "set"] },
+            key: { type: "string" },
+            value: { type: "string" }
+          },
+          required: ["action", "key"]
+        }
+      },
+      {
+        name: "ecommerce_smart_diff_update",
+        description: "Calculate deltas between states",
+        inputSchema: {
+          type: "object",
+          properties: {
+            currentState: { type: "object" },
+            targetState: { type: "object" }
+          },
+          required: ["currentState", "targetState"]
+        }
+      },
+      {
+        name: "ecommerce_hybrid_executor",
+        description: "Hybrid API/CDP/Human execution",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskDetails: { type: "object" }
+          },
+          required: ["taskDetails"]
+        }
+      },
+      {
+        name: "ecommerce_token_telemetry",
+        description: "Record token telemetry",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["record", "get"] },
+            inputTokens: { type: "number" },
+            outputTokens: { type: "number" },
+            savedTokens: { type: "number" }
+          },
+          required: ["action"]
+        }
+      }
     ],
   };
 });
@@ -151,43 +281,82 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   switch (name) {
     case "browser_attach_existing":
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              status: "connected",
-              message: "พร้อมรับคำสั่งพัฒนาต่อจาก Jules (Google AI Agent)",
-              tabs: [],
-            }),
-          },
-        ],
-      };
+      return await handleBrowserAttachExisting(args);
 
-    case "ecommerce_safety_guard": {
-      const current = Number(args?.currentPrice || 0);
-      const proposed = Number(args?.proposedPrice || 0);
-      const maxDrop = Number(args?.maxPriceDropPercent || 50);
+    case "ecommerce_extract_session": {
+      const platform = args?.platform;
+      if (!platform) {
+         return {
+           isError: true,
+           content: [{ type: "text", text: "กรุณาระบุ platform" }]
+         };
+      }
 
-      const dropPercent = ((current - proposed) / current) * 100;
-      const isSafe = dropPercent <= maxDrop;
+      const cdp = new CdpConnection();
+      const extractor = new SessionExtractor(cdp);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              isSafe,
-              dropPercent: Number(dropPercent.toFixed(2)),
-              warning: isSafe
-                ? null
-                : `เตือน: ราคาสินค้าลดลง ${dropPercent.toFixed(1)}% ซึ่งเกินขีดจำกัดความปลอดภัย (${maxDrop}%)`,
-            }),
-          },
-        ],
-      };
+      try {
+         const session = await extractor.extractSession(platform as any);
+         await cdp.disconnect();
+         return {
+           content: [
+             {
+               type: "text",
+               text: JSON.stringify({
+                 status: "success",
+                 message: `ดึงข้อมูล Session สำหรับ ${platform} สำเร็จ`,
+                 sessionSummary: {
+                    platform: session?.platform,
+                    hasCookies: (session?.cookies?.length || 0) > 0,
+                    hasCsrfToken: !!session?.csrfToken,
+                    hasAuthorization: !!session?.authorization
+                 }
+               }),
+             },
+           ],
+         };
+      } catch (error: any) {
+         await cdp.disconnect();
+         return {
+            isError: true,
+            content: [{ type: "text", text: JSON.stringify({ status: "error", message: error.message }) }]
+         };
+      }
     }
 
+    case "ecommerce_product_search":
+      return await handleEcommerceProductSearch(args);
+    case "ecommerce_update_price_stock":
+      return await handleEcommerceUpdatePriceStock(args);
+    case "ecommerce_safety_guard":
+      return await handleEcommerceSafetyGuard(args);
+
+    case "browser_detect_challenge":
+      return await handleBrowserDetectChallenge(args);
+    case "ecommerce_get_store_metrics":
+      return await handleEcommerceGetStoreMetrics(args);
+    case "ecommerce_batch_update_price_stock":
+      return await handleEcommerceBatchUpdatePriceStock(args);
+    case "ecommerce_audit_log":
+      return await handleEcommerceAuditLog(args);
+    case "ecommerce_run_recipe":
+      return await handleEcommerceRunRecipe(args);
+    case "ecommerce_list_recipes":
+      return await handleEcommerceListRecipes(args);
+    case "ecommerce_save_custom_recipe":
+      return await handleEcommerceSaveCustomRecipe(args);
+    case "ecommerce_cached_selector_map":
+      return await handleEcommerceCachedSelectorMap(args);
+    case "ecommerce_context_compressor":
+      return await handleEcommerceContextCompressor(args);
+    case "ecommerce_local_sqlite_cache":
+      return await handleEcommerceLocalSqliteCache(args);
+    case "ecommerce_smart_diff_update":
+      return await handleEcommerceSmartDiffUpdate(args);
+    case "ecommerce_hybrid_executor":
+      return await handleEcommerceHybridExecutor(args);
+    case "ecommerce_token_telemetry":
+      return await handleEcommerceTokenTelemetry(args);
     default:
       return {
         content: [
