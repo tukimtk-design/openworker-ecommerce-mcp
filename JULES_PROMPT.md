@@ -15,26 +15,36 @@
 
 โปรดดำเนินการตามลำดับใน `docs/TASKS.md`:
 
-### Phase 1: Core Infra & CDP Attachment
+### Phase 1: Core Infra & CDP Attachment (Issue #1)
 1. พัฒนา `src/services/cdp-connection.ts`:
    - ใช้ `playwright` หรือ `puppeteer-core` เพื่อเชื่อมต่อกับ `http://localhost:9222` ผ่าน CDP (`connectOverCDP`)
    - สร้างฟังก์ชันค้นหา Active Tab ของ Shopee Seller Centre (`seller.shopee.co.th`), TikTok Shop Seller Center (`seller-th.tiktok.com`), และ Lazada Seller Center (`sellercenter.lazada.co.th`)
 2. พัฒนา `src/tools/browser-profile.ts`:
    - พัฒนา MCP Tool `browser_attach_existing` เพื่อตรวจเช็คสถานะการเชื่อมต่อ และส่งคืนรายชื่อ Tab ร้านค้าที่เปิดล็อกอินอยู่
 
-### Phase 2: Session Extractor & API Interceptor
+### Phase 2: Session Extractor & API Interceptor (Issue #2)
 1. พัฒนา `src/services/session-extractor.ts`:
    - ดึง Cookies, CSRF Tokens (`x-csrf-token`), และ Authorization Bearer จาก Tab ร้านค้าที่เปิดอยู่
 2. พัฒนา `src/services/api-client.ts`:
    - สร้าง HTTP Client สำหรับส่งคำสั่งไปยัง Internal REST/GraphQL Endpoints ของแต่ละแพลตฟอร์มเพื่อแก้ไขราคาสินค้าและสต็อกโดยตรง
 
-### Phase 3: High-Level MCP Tools
+### Phase 3: High-Level MCP Tools (Issue #3)
 1. พัฒนา `src/tools/ecommerce-search.ts`:
    - MCP Tool `ecommerce_product_search`: ค้นหาสินค้าจาก SKU ID, Item ID หรือชื่อสินค้า
 2. พัฒนา `src/tools/ecommerce-update.ts`:
    - MCP Tool `ecommerce_update_price_stock`: ปรับเปลี่ยนราคาสินค้าและจำนวนสต็อกแยกตาม Variant SKU
 3. พัฒนา `src/tools/safety-guard.ts`:
    - MCP Tool `ecommerce_safety_guard`: ตรวจสอบความถูกต้องของราคาและสต็อกก่อนส่งคำสั่ง Save (เช่น เตือนเมื่อราคาสินค้าลดลงเกิน 50%)
+
+### Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools (Issue #4 - New!)
+1. พัฒนา `src/tools/browser-challenge.ts`:
+   - MCP Tool `browser_detect_challenge`: สแกนหา Captcha/OTP และส่งสัญญาณแจ้งเตือนมนุษย์
+2. พัฒนา `src/tools/store-metrics.ts`:
+   - MCP Tool `ecommerce_get_store_metrics`: ดึงสรุปออเดอร์ค้างและสินค้าสต็อกหมด
+3. พัฒนา `src/tools/batch-update.ts`:
+   - MCP Tool `ecommerce_batch_update_price_stock`: อัปเดตสินค้าครั้งละหลายรายการพร้อม Throttling
+4. พัฒนา `src/tools/audit-log.ts`:
+   - MCP Tool `ecommerce_audit_log`: บันทึกประวัติการเปลี่ยนราคาสินค้าเพื่อตรวจสอบย้อนหลัง
 
 ---
 

@@ -32,6 +32,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "ecommerce_extract_session",
+        description: "ดึง Cookies, CSRF Tokens และ Authorization Headers จาก Tab ร้านค้าที่เปิดอยู่",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+          },
+          required: ["platform"],
+        },
+      },
+      {
         name: "ecommerce_product_search",
         description: "ค้นหารายการสินค้าและ SKU จากระบบหลังบ้านร้านค้า",
         inputSchema: {
@@ -69,6 +80,65 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             maxPriceDropPercent: { type: "number", default: 50 },
           },
           required: ["currentPrice", "proposedPrice"],
+        },
+      },
+      {
+        name: "browser_detect_challenge",
+        description: "สแกนหา Captcha/OTP บน Tab ที่เปิดอยู่ และส่งสัญญาณแจ้งเตือนเมื่อต้องให้มนุษย์ปลดล็อกหน้าจอ",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+          },
+          required: ["platform"],
+        },
+      },
+      {
+        name: "ecommerce_get_store_metrics",
+        description: "ดึงข้อมูลสรุปออเดอร์ค้างจัดส่งและรายการ SKU ที่สต็อกกำลังหมด",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+          },
+          required: ["platform"],
+        },
+      },
+      {
+        name: "ecommerce_batch_update_price_stock",
+        description: "อัปเดตราคาและสต็อกแบบหลายรายการพร้อมระบบชะลอความเร็วเพื่อป้องกันการโดน Rate-Limit",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  productId: { type: "string" },
+                  skuId: { type: "string" },
+                  newPrice: { type: "number" },
+                  newStock: { type: "number" },
+                },
+                required: ["productId"],
+              },
+            },
+          },
+          required: ["platform", "items"],
+        },
+      },
+      {
+        name: "ecommerce_audit_log",
+        description: "บันทึกและเรียกดูประวัติการเปลี่ยนแปลงราคาสินค้าและสต็อกย้อนหลัง",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["record", "get_history"] },
+            productId: { type: "string" },
+            limit: { type: "number", default: 20 },
+          },
+          required: ["action"],
         },
       },
     ],

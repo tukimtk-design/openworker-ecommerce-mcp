@@ -18,14 +18,22 @@
 
 ---
 
-## 🔵 Phase 3: E-Commerce Tools Implementation
+## 🔵 Phase 3: E-Commerce Search, Update & Safety Tools
 - [ ] **Task 3.1**: พัฒนา `src/tools/ecommerce-search.ts` สำหรับการค้นหาสินค้าตาม SKU
 - [ ] **Task 3.2**: พัฒนา `src/tools/ecommerce-update.ts` สำหรับอัปเดตราคา/สต็อก
 - [ ] **Task 3.3**: พัฒนา `src/tools/safety-guard.ts` สำหรับตรวจสอบความปลอดภัยของราคา
 
 ---
 
-## 🟣 Phase 4: Integration, Build & CI/CD
-- [ ] **Task 4.1**: รวมทุก Tools ไว้ใน `src/index.ts` และทดสอบ `npm run build`
-- [ ] **Task 4.2**: เขียน Unit Tests ใน `src/**/*.test.ts`
-- [ ] **Task 4.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller
+## 🔴 Phase 4: Human-in-the-Loop, Store Metrics & Batch Tools (✨ เพิ่มเติม)
+- [ ] **Task 4.1**: พัฒนา `src/tools/browser-challenge.ts` สำหรับสแกน Captcha/OTP และแจ้งเตือนมนุษย์ (`browser_detect_challenge`)
+- [ ] **Task 4.2**: พัฒนา `src/tools/store-metrics.ts` สรุปออเดอร์ค้างและสินค้าสต็อกหมด (`ecommerce_get_store_metrics`)
+- [ ] **Task 4.3**: พัฒนา `src/tools/batch-update.ts` รองรับการอัปเดตสินค้าครั้งละหลายรายการพร้อม Throttling (`ecommerce_batch_update_price_stock`)
+- [ ] **Task 4.4**: พัฒนา `src/tools/audit-log.ts` บันทึกประวัติการเปลี่ยนราคาสินค้าเพื่อตรวจสอบย้อนหลัง (`ecommerce_audit_log`)
+
+---
+
+## 🟣 Phase 5: Integration, Build & CI/CD
+- [ ] **Task 5.1**: รวมทุก Tools ไว้ใน `src/index.ts` และทดสอบ `npm run build`
+- [ ] **Task 5.2**: เขียน Unit Tests ใน `src/**/*.test.ts`
+- [ ] **Task 5.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller
