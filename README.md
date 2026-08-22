@@ -1,0 +1,82 @@
+# Openworker E-Commerce MCP Server
+
+MCP (Model Context Protocol) Server ออกแบบสำหรับใช้งานร่วมกับ **Openworker** เพื่อควบคุม Chrome หรือ Microsoft Edge ในการบริหารจัดการสินค้าบนแพลตฟอร์ม E-Commerce หลัก ได้แก่ **Shopee, TikTok Shop และ Lazada**
+
+---
+
+## 🚀 จุดประสงค์โครงการ (Project Overview)
+
+ระบบนี้พัฒนาขึ้นเพื่อแก้ปัญหาการควบคุมเบราว์เซอร์อัตโนมัติของบอททั่วไปบนหน้า Seller Center:
+1. **ล็อกอินผ่าน Session จริง**: เชื่อมต่อ Chrome/Edge ที่ผู้ใช้ล็อกอินค้างไว้อยู่แล้วผ่าน Remote Debugging Port (`9222`) ไม่ต้องล็อกอินใหม่หรือเจอ OTP/2FA ซ้ำซ้อน
+2. **การอัปเดตรวดเร็วผ่าน Internal API Interception**: ดึง Session Cookies/Tokens จากเบราว์เซอร์แล้วส่งคำสั่งอัปเดตผ่าน API โดยตรง รวดเร็ว แม่นยำ ไม่ต้องพึ่งพาการคลิกบน UI เพียงอย่างเดียว
+3. **Safety Guard & Captcha Pause**: ตรวจสอบขอบเขตราคาและสต็อกก่อน Save และหยุดรอเมื่อเจอ Captcha ให้ผู้ใช้ช่วยปลดล็อกได้ทันที
+
+---
+
+## 👥 บทบาทและการทำงาน (Team & Development Roles)
+
+* **Jules (Google AI Agent)**: พัฒนาโค้ด TypeScript, พัฒนา Tools แต่ละหมวดหมู่ (Browser Attach, Session Interceptor, API Client, Safety Guard) และทำ Unit Tests
+* **Controller Agent (Cowork / GitHub Controller)**: ควบคุมโครงสร้างโปรเจกต์, Review Code/PR, ออกแบบ Task Issues, จัดทำ Tag Release และ Deploy เข้าสู่ Openworker
+
+---
+
+## 🛠️ โครงสร้างโปรเจกต์ (Project Structure)
+
+```
+openworker-ecommerce-mcp/
+├── src/
+│   ├── index.ts                # Entry point หลักของ MCP Server
+│   ├── types.ts                # Type Definitions & Schemas
+│   ├── services/
+│   │   ├── cdp-connection.ts   # ตัวจัดการเชื่อมต่อ Chrome/Edge CDP (Port 9222)
+│   │   ├── session-extractor.ts# ตัวดึง Auth Cookies / Bearer Tokens จาก Tab
+│   │   └── api-client.ts       # Internal API Wrapper สำหรับ Shopee/TikTok/Lazada
+│   └── tools/
+│       ├── browser-profile.ts  # Tool: browser_attach_existing
+│       ├── ecommerce-search.ts # Tool: ecommerce_product_search
+│       ├── ecommerce-update.ts # Tool: ecommerce_update_price_stock
+│       └── safety-guard.ts     # Tool: ecommerce_safety_guard
+├── docs/
+│   ├── ARCHITECTURE.md         # สถาปัตยกรรมและรายละเอียด Tool Contracts
+│   └── TASKS.md                # รายการงานสำหรับการพัฒนาราย Phase
+├── JULES_PROMPT.md             # ข้อแนะนำการสั่งงาน Jules (Google AI Agent)
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## 💻 การเปิดใช้งาน Chrome / Edge สำหรับการเชื่อมต่อ
+
+ก่อนเริ่มใช้งาน ให้เปิด Chrome หรือ Microsoft Edge ด้วยคำสั่ง Remote Debugging:
+
+**Windows (Chrome):**
+```cmd
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\ChromeAutomationProfile"
+```
+
+**Windows (Edge):**
+```cmd
+"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222 --user-data-dir="C:\EdgeAutomationProfile"
+```
+
+---
+
+## ⚙️ การติดตั้งและใช้งาน (Installation & Build)
+
+```bash
+# ติดตั้ง dependencies
+npm install
+
+# Build TypeScript
+npm run build
+
+# ทดสอบรัน MCP Server
+npm start
+```
+
+---
+
+## 📄 ใบอนุญาต (License)
+
+MIT License - พัฒนาโดย [tukimtk-design](https://github.com/tukimtk-design)
