@@ -37,3 +37,11 @@
 - [ ] **Task 5.1**: รวมทุก Tools ไว้ใน `src/index.ts` และทดสอบ `npm run build`
 - [ ] **Task 5.2**: เขียน Unit Tests ใน `src/**/*.test.ts`
 - [ ] **Task 5.3**: ตรวจสอบความสมบูรณ์และส่ง Pull Request มายัง Controller
+
+---
+
+## 🟢 Phase 7: Production Hardening & Seamless Windows Integration
+- [x] **Task 7.1**: Openworker Auto-Installer & Config Generator
+- [x] **Task 7.2**: Mock E-Commerce Seller Portal Server (Playwright Mocking)
+- [x] **Task 7.3**: Persistent Data Storage Path & SQLite Auto-Migration
+- [x] **Task 7.4**: DOM Selector Auto-Healing Fallback

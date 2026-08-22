@@ -1,7 +1,7 @@
 import { AuditLogEntry, Platform } from "../types.js";
 
-// In-memory mock store for audit logs (would use a real DB/file in production)
-const mockAuditLogs: AuditLogEntry[] = [];
+import { SqliteStore } from "../services/sqlite-store.js";
+const store = new SqliteStore();
 
 export async function handleEcommerceAuditLog(args: any) {
   const action = args?.action;
@@ -19,13 +19,27 @@ export async function handleEcommerceAuditLog(args: any) {
         newStock: args.newStock,
         updatedBy: "MCP_Agent"
      };
+
+     let mockAuditLogs: AuditLogEntry[] = [];
+     const stored = await store.get("audit_logs_list");
+     if (stored) {
+         mockAuditLogs = JSON.parse(stored);
+     }
      mockAuditLogs.push(newEntry);
+     await store.set("audit_logs_list", JSON.stringify(mockAuditLogs));
+
      return {
         content: [{ type: "text", text: JSON.stringify({ status: "recorded", entry: newEntry }) }]
      };
   } else if (action === "get_history") {
      const productId = args.productId;
      const limit = args.limit || 20;
+
+     let mockAuditLogs: AuditLogEntry[] = [];
+     const stored = await store.get("audit_logs_list");
+     if (stored) {
+         mockAuditLogs = JSON.parse(stored);
+     }
 
      let filteredLogs = mockAuditLogs;
      if (productId) {

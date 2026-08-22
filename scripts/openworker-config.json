@@ -1,0 +1,8 @@
+{
+    "openworker-ecommerce-mcp": {
+        "command": "node",
+        "args": [
+            "dist/index.js"
+        ]
+    }
+}
