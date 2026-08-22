@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  openworker-mcp:
+    build: .
+    image: openworker-ecommerce-mcp:latest
+    container_name: openworker-ecommerce
+    restart: always
+    environment:
+      - NODE_ENV=production
+      # - HTTP_PROXY=http://user:pass@proxy:port
+    volumes:
+      # Persist SQLite database mapping to the container's expected path
+      - ./data:/root/.openworker-ecommerce
+    # We use stdin/stdout for MCP, but if running standalone:
+    # command: node dist/index.js

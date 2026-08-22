@@ -1,3 +1,4 @@
+import { handleEcommerceVisualDomAnalysis } from "./tools/visual-analysis.js";
 import { handleEcommerceMatchVariants } from "./tools/variant-matcher.js";
 import { handleEcommerceSyncMultiplatformStock } from "./tools/multiplatform-sync.js";
 import { handleEcommerceContextCompressor } from "./tools/compressor.js";
@@ -307,6 +308,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["sourcePlatform", "sourceProductName", "targets"]
         }
+      },
+      {
+        name: "ecommerce_visual_dom_analysis",
+        description: "Capture viewport screenshots and bounding boxes for self-correction",
+        inputSchema: {
+          type: "object",
+          properties: {
+            simulate: { type: "boolean" }
+          }
+        }
       }
     ],
   };
@@ -398,6 +409,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceMatchVariants(args);
     case "ecommerce_sync_multiplatform_stock":
       return await handleEcommerceSyncMultiplatformStock(args);
+    case "ecommerce_visual_dom_analysis":
+      return await handleEcommerceVisualDomAnalysis(args);
     default:
       return {
         content: [
