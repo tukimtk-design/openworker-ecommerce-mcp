@@ -1,3 +1,9 @@
+import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
+import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
+import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
+import { handleEcommerceGetPendingOrders, handleEcommerceFulfillOrder } from "./tools/order-fulfillment.js";
+import { handleEcommerceManagePromotions } from "./tools/promotion-manager.js";
+import { handleEcommerceSyncProductImages } from "./tools/asset-sync.js";
 import { handleEcommerceVisualDomAnalysis } from "./tools/visual-analysis.js";
 import { handleEcommerceMatchVariants } from "./tools/variant-matcher.js";
 import { handleEcommerceSyncMultiplatformStock } from "./tools/multiplatform-sync.js";
@@ -315,6 +321,95 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             simulate: { type: "boolean" }
           }
         }
+      },
+      {
+        name: "ecommerce_autonomous_store_manager",
+        description: "Background agent loop for autonomous store management",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["start", "stop", "status", "trigger_now"] },
+            intervalMs: { type: "number" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_clone_product",
+        description: "Clone a product from a source URL to multiple target platforms",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sourceUrl: { type: "string" },
+            targetPlatforms: { type: "array", items: { type: "string" } },
+            translationTemplate: { type: "string" }
+          },
+          required: ["sourceUrl", "targetPlatforms"]
+        }
+      },
+      {
+        name: "ecommerce_auto_reply_chat",
+        description: "Fetch unread messages and auto-reply",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            action: { type: "string", enum: ["fetch_unread", "reply"] },
+            messageId: { type: "string" },
+            replyText: { type: "string" }
+          },
+          required: ["platform", "action"]
+        }
+      },
+      {
+        name: "ecommerce_get_pending_orders",
+        description: "Query unfulfilled orders",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" }
+          },
+          required: ["platform"]
+        }
+      },
+      {
+        name: "ecommerce_fulfill_order",
+        description: "Trigger shipment arrangement",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            orderId: { type: "string" },
+            trackingProvider: { type: "string" }
+          },
+          required: ["platform", "orderId"]
+        }
+      },
+      {
+        name: "ecommerce_manage_promotions",
+        description: "Query and update store Flash Sales and voucher campaigns",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            action: { type: "string", enum: ["list", "create", "update"] },
+            promoDetails: { type: "object" }
+          },
+          required: ["platform", "action"]
+        }
+      },
+      {
+        name: "ecommerce_sync_product_images",
+        description: "Extract, re-format, and upload product gallery images across platforms",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sourcePlatform: { type: "string" },
+            targetPlatforms: { type: "array", items: { type: "string" } },
+            productId: { type: "string" }
+          },
+          required: ["sourcePlatform", "targetPlatforms", "productId"]
+        }
       }
     ],
   };
@@ -408,6 +503,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncMultiplatformStock(args);
     case "ecommerce_visual_dom_analysis":
       return await handleEcommerceVisualDomAnalysis(args);
+    case "ecommerce_autonomous_store_manager":
+      return await handleEcommerceAutonomousStoreManager(args);
+    case "ecommerce_clone_product":
+      return await handleEcommerceCloneProduct(args);
+    case "ecommerce_auto_reply_chat":
+      return await handleEcommerceAutoReplyChat(args);
+    case "ecommerce_get_pending_orders":
+      return await handleEcommerceGetPendingOrders(args);
+    case "ecommerce_fulfill_order":
+      return await handleEcommerceFulfillOrder(args);
+    case "ecommerce_manage_promotions":
+      return await handleEcommerceManagePromotions(args);
+    case "ecommerce_sync_product_images":
+      return await handleEcommerceSyncProductImages(args);
     default:
       return {
         content: [

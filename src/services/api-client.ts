@@ -42,7 +42,7 @@ export class ApiClient {
 
     // In a real implementation, you'd fetch the specific API endpoint.
     // For Issue #2, we mock the success response to demonstrate the structure.
-    console.log(`[ApiClient] Mocking update for ${this.platform}, Product: ${productId}, SKU: ${skuId}`);
+    console.error(`[ApiClient] Mocking update for ${this.platform}, Product: ${productId}, SKU: ${skuId}`);
 
     return {
        success: true,

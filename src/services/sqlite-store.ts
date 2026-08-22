@@ -19,7 +19,7 @@ export class SqliteStore {
         }
 
         const dbPath = path.join(basePath, dbName);
-        console.log(`[SqliteStore] Initializing DB at ${dbPath}`);
+        console.error(`[SqliteStore] Initializing DB at ${dbPath}`);
         this.db = new sqlite3.Database(dbPath);
         this.initDb();
     }

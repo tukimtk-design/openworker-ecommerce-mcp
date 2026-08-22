@@ -176,3 +176,121 @@
     "required": ["action"]
   }
   ```
+
+
+---
+
+### Tool 10: `ecommerce_autonomous_store_manager` (✨ Phase 10)
+* **Description**: จัดการ Store Agent Loop ที่ทำงานเบื้องหลัง
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["start", "stop", "status", "trigger_now"] },
+      "intervalMs": { "type": "number" }
+    },
+    "required": ["action"]
+  }
+  ```
+
+---
+
+### Tool 11: `ecommerce_clone_product` (✨ Phase 10)
+* **Description**: โคลนสินค้าจาก URL ต้นฉบับไปลงในแพลตฟอร์มเป้าหมาย
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "sourceUrl": { "type": "string" },
+      "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+      "translationTemplate": { "type": "string" }
+    },
+    "required": ["sourceUrl", "targetPlatforms"]
+  }
+  ```
+
+---
+
+### Tool 12: `ecommerce_auto_reply_chat` (✨ Phase 10)
+* **Description**: ดึงแชทที่ยังไม่ได้อ่านและตอบกลับอัตโนมัติ
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" },
+      "action": { "type": "string", "enum": ["fetch_unread", "reply"] },
+      "messageId": { "type": "string" },
+      "replyText": { "type": "string" }
+    },
+    "required": ["platform", "action"]
+  }
+  ```
+
+---
+
+### Tool 13: `ecommerce_get_pending_orders` (✨ Phase 10)
+* **Description**: ดึงรายการออเดอร์ที่รอจัดส่ง
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" }
+    },
+    "required": ["platform"]
+  }
+  ```
+
+---
+
+### Tool 14: `ecommerce_fulfill_order` (✨ Phase 10)
+* **Description**: อัปเดตสถานะจัดเตรียมการจัดส่งของออเดอร์
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" },
+      "orderId": { "type": "string" },
+      "trackingProvider": { "type": "string" }
+    },
+    "required": ["platform", "orderId"]
+  }
+  ```
+
+---
+
+### Tool 15: `ecommerce_manage_promotions` (✨ Phase 10)
+* **Description**: จัดการโปรโมชัน (เช่น Flash Sale) หรือแคมเปญแจก Voucher
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" },
+      "action": { "type": "string", "enum": ["list", "create", "update"] },
+      "promoDetails": { "type": "object" }
+    },
+    "required": ["platform", "action"]
+  }
+  ```
+
+---
+
+### Tool 16: `ecommerce_sync_product_images` (✨ Phase 10)
+* **Description**: ซิงค์รูปภาพแกลลอรี่ของสินค้าระหว่างแพลตฟอร์ม
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "sourcePlatform": { "type": "string" },
+      "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+      "productId": { "type": "string" }
+    },
+    "required": ["sourcePlatform", "targetPlatforms", "productId"]
+  }
+  ```

@@ -125,3 +125,20 @@ Captures viewport screenshots and bounding boxes to allow AI to self-correct dur
 
 ### Proxy Rotation
 Supports rotating proxies for multi-account isolation.
+
+---
+
+## 🚀 Phase 10 Features (The Autonomous Era)
+
+### Autonomous AI Store Manager
+Run the background agent loop to automatically reply to chats, check competitor prices, and rebalance stock across all platforms periodically without manual intervention.
+
+### Omni-Channel Product Cloner
+Instantly scrape products from source URLs, apply rebranding or translation templates via LLMs, and publish them to multiple target platforms simultaneously.
+
+### E-Commerce Expansion Suite
+We expanded our toolkit to a total of 27 tools, now covering:
+- Auto Chat Replies
+- Pending Order Extraction & Fulfillment
+- Promotion & Flash Sale Management
+- Cross-platform Asset & Image Sync
