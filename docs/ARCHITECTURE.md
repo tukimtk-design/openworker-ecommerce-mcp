@@ -1,62 +1,296 @@
-# System Architecture & Non-Overlapping Hybrid Tool Contracts
+# System Architecture & Tool Contracts
 
-## 1. Hybrid Architecture & Tool Namespace Isolation
-
-เพื่อป้องกันไม่ให้ AI สับสนในการเลือกใช้ Tools ระหว่าง **lnwjud** (System & Browser Baseline) และ **openworker-ecommerce-mcp** (E-Commerce Domain Specialty):
-
-1. **lnwjud (System Capabilities Provider)**: รับผิดชอบงานระบบพื้นฐาน เช่น `file_*`, `git_*`, `shell_*`, `process_*`, `browser_*` (Playwright Generic), `dom_cdp`
-2. **openworker-ecommerce-mcp (Domain Specialty Provider)**: ทุก Tool ในโปรเจกต์นี้จะถูกกำหนด Prefix บังคับเป็น **`ecommerce_*`** เพื่อเจาะจงเฉพาะงาน Shopee, TikTok Shop และ Lazada เท่านั้น ห้ามใช้ชื่อซ้ำกับ `browser_*` ของ lnwjud
+## 1. High-Level System Flow
 
 ```
-+-----------------------------------------------------------------------------------+
-|                                   Openworker                                      |
-|                       (AI Agent Orchestrator & UI Layer)                          |
-+-----------------------------------------------------------------------------------+
-                                         |
-               +-------------------------+-------------------------+
-               | (MCP Protocol)                                    | (MCP Protocol)
-               v                                                   v
-+------------------------------------+             +------------------------------------+
-|          lnwjud Runtime            |             |     openworker-ecommerce-mcp       |
-|    - file_*, git_*, shell_*        |             |    - ecommerce_attach_store_browser|
-|    - process_*, browser_*          |             |    - ecommerce_extract_session     |
-|    - dom_cdp, accessibility        |             |    - ecommerce_detect_captcha      |
-|    - window, vision                |             |    - ecommerce_run_recipe          |
-|    (System Baseline Capabilities)  |             |    - ecommerce_context_compressor   |
-+------------------------------------+             +------------------------------------+
++-------------------+      MCP Protocol      +----------------------------------+
+|    Openworker     | <--------------------> |  openworker-ecommerce-mcp        |
+|  (User AI Client) |                        |  (Node.js / TypeScript Server)  |
++-------------------+                        +----------------------------------+
+                                                              |
+                                                    CDP (Port 9222)
+                                                              |
+                                                              v
+                                             +----------------------------------+
+                                             | User's Chrome / Edge Browser     |
+                                             | - Shopee Seller Centre Tab       |
+                                             | - TikTok Shop Seller Center Tab  |
+                                             | - Lazada Seller Center Tab       |
+                                             +----------------------------------+
 ```
 
 ---
 
-## 2. Complete Non-Overlapping Tool Contract Specification (19 Tools)
+## 2. Complete MCP Tools Contract Specification
 
-### Phase 1: Core E-Commerce Browser Attachment
-* **`ecommerce_attach_store_browser`**: เชื่อมต่อ Chrome/Edge Port 9222 และระบุเฉพาะ Tab ร้านค้า Shopee, TikTok Shop, Lazada (ไม่ซ้ำกับ `browser_*` ทั่วไป)
+### Tool 1: `browser_attach_existing`
+* **Description**: ตรวจสอบและเชื่อมต่อกับ Chrome/Edge ที่ผู้ใช้เปิดไว้บนพอร์ต 9222 พร้อมคืนค่ารายการ Tab ร้านค้า E-Commerce ที่ล็อกอินอยู่
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "port": { "type": "number", "default": 9222 }
+    }
+  }
+  ```
 
-### Phase 2: Session Extraction & API Interception
-* **`ecommerce_extract_session`**: ดึง Auth Cookies, CSRF Tokens และ Bearer Tokens สำหรับยิง API ตรง
-* **`ecommerce_api_request_helper`**: Helper ส่งคำสั่งไปยัง Internal Seller Center API โดยตรง
+---
 
-### Phase 3: High-Level Search, Update & Safety Guard
-* **`ecommerce_product_search`**: ค้นหาสินค้าและ SKU ในระบบหลังบ้านร้านค้า
-* **`ecommerce_update_price_stock`**: ปรับเปลี่ยนราคาและจำนวนสต็อก
-* **`ecommerce_safety_guard`**: ตรวจสอบขอบเขตส่วนต่างราคากันข้อผิดพลาด
+### Tool 2: `ecommerce_extract_session`
+* **Description**: ดึง Cookies, CSRF Tokens และ Header สำหรับใช้ในการส่งคำสั่ง API ตรงไปยังแพลตฟอร์ม
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] }
+    },
+    "required": ["platform"]
+  }
+  ```
 
-### Phase 4: Captcha, Metrics, Batch & Audit Logs
-* **`ecommerce_detect_captcha_challenge`**: สแกนหา Slide Captcha/OTP และแจ้งเตือนมนุษย์เมื่อต้องการการยืนยันตัวตน
-* **`ecommerce_get_store_metrics`**: สรุปจำนวนออเดอร์ค้างจัดส่งและ SKU สต็อกหมด
-* **`ecommerce_batch_update_price_stock`**: อัปเดตราคาและสต็อกแบบหลายรายการพร้อมระบบชะลอความเร็ว
-* **`ecommerce_audit_log`**: บันทึกและเรียกดูประวัติการเปลี่ยนแปลงราคาสินค้าย้อนหลัง
+---
 
-### Phase 5: Smart Workflow Recipe Engine (Token Saver Level 1)
-* **`ecommerce_run_recipe`**: รันคำสั่งสำเร็จรูปโดยรับเพียง Parameter สั้นๆ (ลด Token >95%)
-* **`ecommerce_list_recipes`**: แสดงรายการ Recipes และ Parameter Schemas
-* **`ecommerce_save_custom_recipe`**: บันทึก Custom Macro จาก AI
-* **`ecommerce_cached_selector_map`**: แคช Selector ป้องกันปัญหา UI ปรับเปลี่ยน
+### Tool 3: `ecommerce_product_search`
+* **Description**: ค้นหารายการสินค้าและ Variant SKU จากระบบหลังบ้านร้านค้า
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
+      "query": { "type": "string", "description": "ชื่อสินค้า, SKU ID หรือ Item ID" }
+    },
+    "required": ["platform", "query"]
+  }
+  ```
 
-### Phase 6: Advanced Capabilities & Context Compression Engine (Token Saver Level 2)
-* **`ecommerce_context_compressor`**: บีบอัด DOM/HTML ขนาดใหญ่เหลือเฉพาะ Micro-JSON (<100 tokens, ลด Token 98%+)
-* **`ecommerce_local_sqlite_cache`**: อ่าน/เขียนข้อมูลสินค้าและออเดอร์จากฐานข้อมูลในเครื่อง
-* **`ecommerce_smart_diff_update`**: สั่งอัปเดตเฉพาะส่วนต่าง Delta (เช่น deltaStock: -2)
-* **`ecommerce_hybrid_executor`**: ระบบรันสลับเส้นทางให้อัตโนมัติ (Fast API -> CDP -> Human Alert)
-* **`ecommerce_token_telemetry`**: Dashboard ติดตามสถิติการประหยัด Token และประสิทธิภาพ
+---
+
+### Tool 4: `ecommerce_update_price_stock`
+* **Description**: ปรับเปลี่ยนราคาสินค้าและจำนวนสต็อกสำหรับสินค้าหรือ Variant SKU ที่กำหนด
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
+      "productId": { "type": "string" },
+      "skuId": { "type": "string" },
+      "newPrice": { "type": "number" },
+      "newStock": { "type": "number" }
+    },
+    "required": ["platform", "productId"]
+  }
+  ```
+
+---
+
+### Tool 5: `ecommerce_safety_guard`
+* **Description**: ตรวจสอบความถูกต้องและแจ้งเตือนความเสี่ยงของราคาสินค้า/สต็อกก่อนบันทึกจริง
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "currentPrice": { "type": "number" },
+      "proposedPrice": { "type": "number" },
+      "maxPriceDropPercent": { "type": "number", "default": 50 }
+    },
+    "required": ["currentPrice", "proposedPrice"]
+  }
+  ```
+
+---
+
+### Tool 6: `browser_detect_challenge` (✨ เพิ่มเติม)
+* **Description**: สแกนหา Captcha, OTP Modal หรือ Security Challenge บน Tab ที่เปิดอยู่ และส่งสัญญาณแจ้งเตือนเมื่อต้องการให้มนุษย์ช่วยแก้หน้าจอ
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] }
+    },
+    "required": ["platform"]
+  }
+  ```
+
+---
+
+### Tool 7: `ecommerce_get_store_metrics` (✨ เพิ่มเติม)
+* **Description**: สรุปข้อมูลสำคัญของร้านค้า เช่น จำนวนออเดอร์ที่รอจัดส่ง (Pending Orders) และรายการ SKU ที่สต็อกกำลังหมด
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] }
+    },
+    "required": ["platform"]
+  }
+  ```
+
+---
+
+### Tool 8: `ecommerce_batch_update_price_stock` (✨ เพิ่มเติม)
+* **Description**: อัปเดตราคาและสต็อกแบบหลายรายการ (Batch) พร้อมระบบใส่ความหน่วงสุ่ม (Anti-Rate-Limit Delay)
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada"] },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "productId": { "type": "string" },
+            "skuId": { "type": "string" },
+            "newPrice": { "type": "number" },
+            "newStock": { "type": "number" }
+          },
+          "required": ["productId"]
+        }
+      }
+    },
+    "required": ["platform", "items"]
+  }
+  ```
+
+---
+
+### Tool 9: `ecommerce_audit_log` (✨ เพิ่มเติม)
+* **Description**: บันทึกประวัติการเปลี่ยนแปลงราคาสินค้า/สต็อก ย้อนหลัง เพื่อตรวจสอบและ Rollback
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["record", "get_history"] },
+      "productId": { "type": "string" },
+      "limit": { "type": "number", "default": 20 }
+    },
+    "required": ["action"]
+  }
+  ```
+
+
+---
+
+### Tool 10: `ecommerce_autonomous_store_manager` (✨ Phase 10)
+* **Description**: จัดการ Store Agent Loop ที่ทำงานเบื้องหลัง
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["start", "stop", "status", "trigger_now"] },
+      "intervalMs": { "type": "number" }
+    },
+    "required": ["action"]
+  }
+  ```
+
+---
+
+### Tool 11: `ecommerce_clone_product` (✨ Phase 10)
+* **Description**: โคลนสินค้าจาก URL ต้นฉบับไปลงในแพลตฟอร์มเป้าหมาย
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "sourceUrl": { "type": "string" },
+      "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+      "translationTemplate": { "type": "string" }
+    },
+    "required": ["sourceUrl", "targetPlatforms"]
+  }
+  ```
+
+---
+
+### Tool 12: `ecommerce_auto_reply_chat` (✨ Phase 10)
+* **Description**: ดึงแชทที่ยังไม่ได้อ่านและตอบกลับอัตโนมัติ
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" },
+      "action": { "type": "string", "enum": ["fetch_unread", "reply"] },
+      "messageId": { "type": "string" },
+      "replyText": { "type": "string" }
+    },
+    "required": ["platform", "action"]
+  }
+  ```
+
+---
+
+### Tool 13: `ecommerce_get_pending_orders` (✨ Phase 10)
+* **Description**: ดึงรายการออเดอร์ที่รอจัดส่ง
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" }
+    },
+    "required": ["platform"]
+  }
+  ```
+
+---
+
+### Tool 14: `ecommerce_fulfill_order` (✨ Phase 10)
+* **Description**: อัปเดตสถานะจัดเตรียมการจัดส่งของออเดอร์
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" },
+      "orderId": { "type": "string" },
+      "trackingProvider": { "type": "string" }
+    },
+    "required": ["platform", "orderId"]
+  }
+  ```
+
+---
+
+### Tool 15: `ecommerce_manage_promotions` (✨ Phase 10)
+* **Description**: จัดการโปรโมชัน (เช่น Flash Sale) หรือแคมเปญแจก Voucher
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "platform": { "type": "string" },
+      "action": { "type": "string", "enum": ["list", "create", "update"] },
+      "promoDetails": { "type": "object" }
+    },
+    "required": ["platform", "action"]
+  }
+  ```
+
+---
+
+### Tool 16: `ecommerce_sync_product_images` (✨ Phase 10)
+* **Description**: ซิงค์รูปภาพแกลลอรี่ของสินค้าระหว่างแพลตฟอร์ม
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "sourcePlatform": { "type": "string" },
+      "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+      "productId": { "type": "string" }
+    },
+    "required": ["sourcePlatform", "targetPlatforms", "productId"]
+  }
+  ```

@@ -18,7 +18,7 @@ export class CdpConnection {
       this.browser = await chromium.connectOverCDP(`http://localhost:${this.port}`);
     } catch (error) {
       if (os.platform() === 'win32') {
-         console.log("CDP connection failed on Windows. Attempting to auto-launch browser...");
+         console.error("CDP connection failed on Windows. Attempting to auto-launch browser...");
          await this.autoLaunchWindows();
          // Wait a moment for the browser to start
          await new Promise(resolve => setTimeout(resolve, 3000));
@@ -57,7 +57,7 @@ export class CdpConnection {
      }
      const args = [`--remote-debugging-port=${this.port}`, `--user-data-dir=${profileDir}`];
 
-     console.log(`Spawning ${exe} with args ${args.join(' ')}`);
+     console.error(`Spawning ${exe} with args ${args.join(' ')}`);
      const child = spawn(exe, args, { detached: true, stdio: 'ignore' });
      child.unref();
   }
