@@ -193,3 +193,19 @@ If you are upgrading your LineageOS 20.0 build or MindTheGapps package:
 3. Connect your device with USB Debugging enabled.
 4. Run `.\scripts\upgrade-rom-helper.ps1` (or access via the Master Optimizer option 6).
 5. The script will verify battery (>=50%), push files, and automatically generate a TWRP `openrecoveryscript` so that booting into recovery instantly flashes the updates and wipes caches.
+
+---
+
+## 🚀 Phase 14 Features (Monetization & Revenue Engine)
+
+### Affiliate Matrix Engine
+Automates high-volume batch video creation, multi-platform publishing, and basket tagging scheduling across TikTok, Shopee, and Facebook Reels.
+
+### AI Chat Closing Agent
+A highly intelligent tool responding to incoming chat requests while specifically scanning abandoned cart items and auto-generating direct checkout URLs equipped with personalized discounts.
+
+### Dynamic Pricing Arbitrage
+Real-time competitor analysis tool balancing optimal Buy-Box prices while strictly securing profit margins dynamically.
+
+### Revenue Telemetry
+An aggregated visualization endpoint to measure AI-driven GMV impact and affiliate return on investment simultaneously across all stores.

@@ -1,3 +1,7 @@
+import { handleEcommerceAffiliateMatrixEngine } from "./tools/affiliate-matrix-engine.js";
+import { handleEcommerceDynamicPricingArbitrage } from "./tools/dynamic-pricing-arbitrage.js";
+import { handleEcommerceAiChatClosingAgent } from "./tools/ai-chat-closing-agent.js";
+import { handleEcommerceRevenueTelemetryDashboard } from "./tools/revenue-telemetry-dashboard.js";
 import { handleEcommerceVideoScriptGenerator } from "./tools/video-script-generator.js";
 import { handleEcommerceVideoEditorWorkflow } from "./tools/video-editor-workflow.js";
 import { handleEcommerceAffiliateBasketTagger } from "./tools/affiliate-basket-tagger.js";
@@ -568,6 +572,80 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "videoFilePath"]
         }
+      },
+      {
+        name: "ecommerce_affiliate_matrix_engine",
+        description: "Automated batch video generation, affiliate basket tagging, and scheduling multi-platform posts.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productIds: { type: "array", items: { type: "string" } },
+            dailyVideoCount: { type: "number" },
+            platforms: { type: "array", items: { type: "string" } },
+            targetMarginThreshold: { type: "number" }
+          },
+          required: ["productIds", "platforms"]
+        }
+      },
+      {
+        name: "ecommerce_dynamic_pricing_arbitrage",
+        description: "Real-time competitor price monitoring and auto-adjusting prices.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            targetCategory: { type: "string" },
+            minMarginPercent: { type: "number" },
+            autoApply: { type: "boolean" },
+            platforms: { type: "array", items: { type: "string" } }
+          },
+          required: ["targetCategory", "platforms"]
+        }
+      },
+      {
+        name: "ecommerce_ai_chat_closing_agent",
+        description: "Customer chat response and personalized discount generation.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            customerId: { type: "string" },
+            messageHistory: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  role: { type: "string" },
+                  text: { type: "string" }
+                },
+                required: ["role", "text"]
+              }
+            },
+            cartItems: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  productId: { type: "string" },
+                  quantity: { type: "number" }
+                },
+                required: ["productId", "quantity"]
+              }
+            }
+          },
+          required: ["platform", "customerId", "messageHistory"]
+        }
+      },
+      {
+        name: "ecommerce_revenue_telemetry_dashboard",
+        description: "Aggregate GMV, affiliate commissions, and AI ROI metrics across channels.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            dateRange: { type: "string", enum: ["today", "last_7_days", "last_30_days", "this_month"] },
+            includePlatforms: { type: "array", items: { type: "string" } }
+          },
+          required: ["dateRange", "includePlatforms"]
+        }
       }
     ],
   };
@@ -685,6 +763,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceAffiliateBasketTagger(args);
     case "ecommerce_social_video_publisher":
       return await handleEcommerceSocialVideoPublisher(args);
+    case "ecommerce_affiliate_matrix_engine":
+      return await handleEcommerceAffiliateMatrixEngine(args);
+    case "ecommerce_dynamic_pricing_arbitrage":
+      return await handleEcommerceDynamicPricingArbitrage(args);
+    case "ecommerce_ai_chat_closing_agent":
+      return await handleEcommerceAiChatClosingAgent(args);
+    case "ecommerce_revenue_telemetry_dashboard":
+      return await handleEcommerceRevenueTelemetryDashboard(args);
     default:
       return {
         content: [
