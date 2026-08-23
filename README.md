@@ -142,3 +142,13 @@ We expanded our toolkit to a total of 27 tools, now covering:
 - Pending Order Extraction & Fulfillment
 - Promotion & Flash Sale Management
 - Cross-platform Asset & Image Sync
+
+---
+
+## 🚀 Phase 11 Features (LnwShop & M365 Copilot)
+
+### LnwShop Integration
+Added native support for LnwShop, capsulefill.com, and lnw.co domains. Stock and price updates can now be synced cross-platform including LnwShop endpoints.
+
+### Microsoft 365 Copilot Bridge
+Introduced `ecommerce_m365_copilot_bridge` to natively interact with the `m365.cloud.microsoft/chat` interface, allowing autonomous agents to offload complex reasoning or formatting tasks securely.

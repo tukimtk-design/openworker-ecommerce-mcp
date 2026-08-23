@@ -82,6 +82,8 @@ export class CdpConnection {
           platform = 'tiktok';
         } else if (url.includes('sellercenter.lazada.co.th')) {
           platform = 'lazada';
+        } else if (url.match(/lnwshop\.com|capsulefill\.com|lnw\.co/)) {
+          platform = 'lnwshop';
         }
 
         if (platform) {

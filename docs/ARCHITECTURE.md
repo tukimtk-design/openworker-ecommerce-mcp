@@ -294,3 +294,20 @@
     "required": ["sourcePlatform", "targetPlatforms", "productId"]
   }
   ```
+
+
+---
+
+### Tool 17: `ecommerce_m365_copilot_bridge` (✨ Phase 11)
+* **Description**: เชื่อมต่อและทำงานร่วมกับหน้าต่างแชท Microsoft 365 Copilot
+* **Input Schema**:
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string", "enum": ["attach_m365_tab", "send_prompt", "read_latest_response", "get_chat_history"] },
+      "prompt": { "type": "string" }
+    },
+    "required": ["action"]
+  }
+  ```

@@ -65,6 +65,9 @@ export class SessionExtractor {
        csrfToken = cookies.find(c => c.name === 'csrf_session_id')?.value;
     } else if (platform === 'lazada') {
        csrfToken = cookies.find(c => c.name === 'x5sec')?.value;
+    } else if (platform === 'lnwshop') {
+       csrfToken = cookies.find(c => c.name === 'PHPSESSID' || c.name === 'ci_session')?.value;
+       authorization = await targetPage.evaluate(() => window.localStorage.getItem('lnw_token')) || undefined;
     }
 
     return {
