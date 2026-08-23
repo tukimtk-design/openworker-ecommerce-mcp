@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const PlatformSchema = z.enum(["shopee", "tiktok", "lazada"]);
+export const PlatformSchema = z.enum(["shopee", "tiktok", "lazada", "lnwshop"]);
 export type Platform = z.infer<typeof PlatformSchema>;
 
 export interface StoreTabInfo {

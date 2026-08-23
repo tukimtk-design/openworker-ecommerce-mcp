@@ -1,3 +1,4 @@
+import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -63,7 +64,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
           },
           required: ["platform"],
         },
@@ -74,7 +75,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
             query: { type: "string" },
           },
           required: ["platform", "query"],
@@ -86,7 +87,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
             productId: { type: "string" },
             skuId: { type: "string" },
             newPrice: { type: "number" },
@@ -114,7 +115,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
           },
           required: ["platform"],
         },
@@ -125,7 +126,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
           },
           required: ["platform"],
         },
@@ -136,7 +137,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
             items: {
               type: "array",
               items: {
@@ -474,6 +475,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["sourcePlatform", "targetPlatforms", "productId"]
         }
+      },
+      {
+        name: "ecommerce_m365_copilot_bridge",
+        description: "Bridge to Microsoft 365 Copilot Chat interface",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["attach_m365_tab", "send_prompt", "read_latest_response", "get_chat_history"] },
+            prompt: { type: "string" }
+          },
+          required: ["action"]
+        }
       }
     ],
   };
@@ -581,6 +594,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceManagePromotions(args);
     case "ecommerce_sync_product_images":
       return await handleEcommerceSyncProductImages(args);
+    case "ecommerce_m365_copilot_bridge":
+      return await handleEcommerceM365CopilotBridge(args);
     default:
       return {
         content: [
