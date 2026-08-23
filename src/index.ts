@@ -1,3 +1,7 @@
+import { handleEcommerceVideoScriptGenerator } from "./tools/video-script-generator.js";
+import { handleEcommerceVideoEditorWorkflow } from "./tools/video-editor-workflow.js";
+import { handleEcommerceAffiliateBasketTagger } from "./tools/affiliate-basket-tagger.js";
+import { handleEcommerceSocialVideoPublisher } from "./tools/social-video-publisher.js";
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
@@ -487,6 +491,83 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_video_script_generator",
+        description: "Generates high-converting short-form video storyboards based on product details.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string" },
+            platform: { type: "string", enum: ["tiktok", "shopee_video", "reels", "shorts"] },
+            scriptStyle: { type: "string", enum: ["problem_solution", "unboxing_review", "storytelling", "flash_sale_urgency"] },
+            targetAudience: { type: "string" },
+            language: { type: "string" }
+          },
+          required: ["productId", "platform", "scriptStyle"]
+        }
+      },
+      {
+        name: "ecommerce_video_editor_workflow",
+        description: "Assembles product images/clips into a rendered short-form video or CapCut draft format.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            mediaAssets: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  type: { type: "string" },
+                  url: { type: "string" },
+                  durationSec: { type: "number" }
+                },
+                required: ["type", "url", "durationSec"]
+              }
+            },
+            voiceoverText: { type: "string" },
+            bgmStyle: { type: "string" },
+            aspectRatio: { type: "string", enum: ["9:16", "16:9", "1:1"] },
+            exportFormat: { type: "string", enum: ["mp4", "capcut_draft"] }
+          },
+          required: ["mediaAssets"]
+        }
+      },
+      {
+        name: "ecommerce_affiliate_basket_tagger",
+        description: "Creates affiliate anchor links and product basket parameters.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada"] },
+            productId: { type: "string" },
+            affiliateCode: { type: "string" },
+            customOfferText: { type: "string" }
+          },
+          required: ["platform", "productId", "affiliateCode"]
+        }
+      },
+      {
+        name: "ecommerce_social_video_publisher",
+        description: "Uploads video, applies caption, and attaches the product basket tag.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["tiktok", "shopee_video", "facebook_reels", "youtube_shorts"] },
+            videoFilePath: { type: "string" },
+            caption: { type: "string" },
+            hashtags: { type: "array", items: { type: "string" } },
+            basketProductTag: {
+              type: "object",
+              properties: {
+                productId: { type: "string" },
+                affiliateLink: { type: "string" }
+              },
+              required: ["productId", "affiliateLink"]
+            }
+          },
+          required: ["platform", "videoFilePath"]
+        }
       }
     ],
   };
@@ -596,6 +677,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_video_script_generator":
+      return await handleEcommerceVideoScriptGenerator(args);
+    case "ecommerce_video_editor_workflow":
+      return await handleEcommerceVideoEditorWorkflow(args);
+    case "ecommerce_affiliate_basket_tagger":
+      return await handleEcommerceAffiliateBasketTagger(args);
+    case "ecommerce_social_video_publisher":
+      return await handleEcommerceSocialVideoPublisher(args);
     default:
       return {
         content: [

@@ -70,3 +70,11 @@
 - [x] **Task 10.3**: E-Commerce Expansion Tools (Chat, Orders, Promos, Assets)
 - [x] **Task 10.4**: Testing & Verification
 - [x] **Task 10.5**: Documentation & Release Tag (`v1.1.0-autonomous`)
+
+---
+
+## 🟢 Phase 13: E-Commerce AI Video Creation & Affiliate Basket Tagging Suite
+- [x] **Task 13.1**: AI Short-Form Video Script Generator (`ecommerce_video_script_generator`)
+- [x] **Task 13.2**: Automated Video Editor Workflow (`ecommerce_video_editor_workflow`)
+- [x] **Task 13.3**: Affiliate Basket Tagging & Anchor Manager (`ecommerce_affiliate_basket_tagger`)
+- [x] **Task 13.4**: Multi-Platform Video Publisher (`ecommerce_social_video_publisher`)

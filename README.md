@@ -152,3 +152,44 @@ Added native support for LnwShop, capsulefill.com, and lnw.co domains. Stock and
 
 ### Microsoft 365 Copilot Bridge
 Introduced `ecommerce_m365_copilot_bridge` to natively interact with the `m365.cloud.microsoft/chat` interface, allowing autonomous agents to offload complex reasoning or formatting tasks securely.
+
+---
+
+## 🚀 Phase 13 Features (AI Video & Affiliate Suite)
+
+### AI Short-Form Video Automation
+Automatically generate high-converting video scripts (hooks, pain points, solutions), assemble media assets into CapCut drafts or MP4s, and automatically attach affiliate product baskets ("ปักตะกร้า") when publishing to TikTok Shop, Shopee Video, Facebook Reels, and YouTube Shorts.
+
+---
+
+# 📱 Samsung Galaxy Note 5 (noblelte) Optimization Manual
+
+This repository also contains specialized deployment tools for maximizing the performance of the **Samsung Galaxy Note 5 (SM-N920C)** running **LineageOS 20.0 (Android 13)** with KernelSU.
+
+## Disclaimer
+These tools are explicitly built for the `noblelte` device. Modifying system parameters or flashing ROMs carries inherent risks. Use at your own risk.
+
+## Available Features (Phases 1-10)
+Our optimization suite operates over 10 defined phases. These phases tackle runtime compilation, kernel parameters, zRAM configuration, and more.
+
+### Using the Master Dashboard
+For the simplest experience, launch the Master Optimizer dashboard via PowerShell:
+\`\`\`powershell
+.\scripts\master-optimizer.ps1
+\`\`\`
+
+From the interactive menu, you can:
+1. **Benchmark**: Capture a baseline profile before modifying system parameters.
+2. **Apply System Tweaks (Phase 1)**: Force background DEXOPT compilation and ADB configuration.
+3. **Deploy KSU Module (Phases 2-8)**: Push our custom KernelSU boot scripts to optimize memory, scheduler, CPU frequencies, and UI rendering natively on device boot.
+4. **One-Click Full Optimization**: Runs benchmarking, system tweaks, and KSU deployment automatically.
+5. **Rollback**: Remove the KSU module and revert settings.
+6. **ROM Upgrade Helper (Phase 9)**: Flash ROMs effortlessly.
+
+### Phase 9: Target ROM Upgrade Helper
+If you are upgrading your LineageOS 20.0 build or MindTheGapps package:
+1. Place the ROM zip in the `Rom/` folder.
+2. Place the MindTheGapps zip in the `Tweak/` folder.
+3. Connect your device with USB Debugging enabled.
+4. Run `.\scripts\upgrade-rom-helper.ps1` (or access via the Master Optimizer option 6).
+5. The script will verify battery (>=50%), push files, and automatically generate a TWRP `openrecoveryscript` so that booting into recovery instantly flashes the updates and wipes caches.
