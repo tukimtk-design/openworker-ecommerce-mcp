@@ -36,7 +36,7 @@ describe("Phase 14: Monetization Engine Suite", () => {
             platform: "tiktok",
             customerId: "CUST-001",
             messageHistory: [{ role: "user", text: "How much?" }],
-            cartItems: [{ productId: "P1", quantity: 1 }]
+            cartItems: [{ productId: "P1", quantity: 1, price: 600 }]
         });
         const parsed = JSON.parse((result as any).content[0].text);
         assert.strictEqual(parsed.status, "success");
