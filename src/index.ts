@@ -1,6 +1,8 @@
+import { handleEcommerceStealthBrowserAutomation } from "./tools/stealth-browser-automation.js";
+import { handleEcommerceAiMediaMonetizationSuite } from "./tools/ai-media-monetization.js";
 import { handleEcommerceAffiliateMatrixEngine } from "./tools/affiliate-matrix-engine.js";
-import { handleEcommerceDynamicPricingArbitrage } from "./tools/dynamic-pricing-arbitrage.js";
 import { handleEcommerceAiChatClosingAgent } from "./tools/ai-chat-closing-agent.js";
+import { handleEcommerceDynamicPricingArbitrage } from "./tools/dynamic-pricing-arbitrage.js";
 import { handleEcommerceRevenueTelemetryDashboard } from "./tools/revenue-telemetry-dashboard.js";
 import { handleEcommerceVideoScriptGenerator } from "./tools/video-script-generator.js";
 import { handleEcommerceVideoEditorWorkflow } from "./tools/video-editor-workflow.js";
@@ -636,6 +638,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "ecommerce_stealth_browser_automation",
+        description: "ระบบสวมรอยพฤติกรรมมนุษย์ (Human Mimicry) และป้องกันการถูกตรวจจับจาก Anti-bot",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["navigate", "human_click", "human_type", "scroll_and_dwell", "bypass_challenge"] },
+            url: { type: "string" },
+            selector: { type: "string" },
+            text: { type: "string" },
+            sessionKey: { type: "string" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_ai_media_monetization_suite",
+        description: "ระบบผลิตคลิปสั้น (9:16) จากภาพสินค้า พร้อมเสียงพากย์และซับไตเติ้ลเพื่อดึงดูดการซื้อ",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string" },
+            style: { type: "string", enum: ["review", "unboxing", "problem_solving", "cinematic"] },
+            bgmStyle: { type: "string" },
+            includeVoiceover: { type: "boolean" }
+          },
+          required: ["productId", "style"]
+        }
+      },
+      {
         name: "ecommerce_revenue_telemetry_dashboard",
         description: "Aggregate GMV, affiliate commissions, and AI ROI metrics across channels.",
         inputSchema: {
@@ -771,6 +802,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceAiChatClosingAgent(args);
     case "ecommerce_revenue_telemetry_dashboard":
       return await handleEcommerceRevenueTelemetryDashboard(args);
+    case "ecommerce_stealth_browser_automation":
+      return await handleEcommerceStealthBrowserAutomation(args);
+    case "ecommerce_ai_media_monetization_suite":
+      return await handleEcommerceAiMediaMonetizationSuite(args);
+    case "ecommerce_affiliate_matrix_engine":
+      return await handleEcommerceAffiliateMatrixEngine(args);
+    case "ecommerce_ai_chat_closing_agent":
+      return await handleEcommerceAiChatClosingAgent(args);
     default:
       return {
         content: [

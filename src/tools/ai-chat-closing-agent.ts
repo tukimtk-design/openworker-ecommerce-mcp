@@ -8,10 +8,12 @@ export async function handleEcommerceAiChatClosingAgent(args: any) {
          return { isError: true, content: [{ type: "text", text: "กรุณาระบุ platform, customerId และ messageHistory แบบ array" }] };
     }
 
-    const hasCart = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
-    const actionTaken = hasCart
-        ? `Sent 5% personalized discount for abandoned cart items (${cartItems.length} items)`
-        : `Sent persuasive product recommendation with direct checkout link`;
+    // Mocking the AI closing agent logic
+    let actionTaken = "Sent persuasive product recommendation with direct affiliate checkout link to recover abandoned cart.";
+
+    if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+        actionTaken += " Included a 5% personalized discount to secure the sale.";
+    }
 
     return {
         content: [{
@@ -21,7 +23,7 @@ export async function handleEcommerceAiChatClosingAgent(args: any) {
                 platform,
                 customerId,
                 actionTaken,
-                aiResponse: "นี่คือดีลพิเศษสำหรับคุณโดยเฉพาะ! สั่งซื้อผ่านลิงก์นี้รับส่วนลดทันที"
+                aiResponse: "นี่คือตะกร้าสินค้าพิเศษสำหรับคุณ สั่งซื้อตอนนี้รับส่วนลดทันที!"
             })
         }]
     };

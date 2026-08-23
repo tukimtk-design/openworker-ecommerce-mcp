@@ -55,3 +55,30 @@ describe("Phase 14: Monetization Engine Suite", () => {
     });
 
 });
+
+import { handleEcommerceStealthBrowserAutomation } from "../tools/stealth-browser-automation.js";
+import { handleEcommerceAiMediaMonetizationSuite } from "../tools/ai-media-monetization.js";
+
+describe("Phase 14: Stealth & Media Monetization Suite", () => {
+    it("should manage stealth browser automation", async () => {
+        const result = await handleEcommerceStealthBrowserAutomation({
+            action: "navigate",
+            url: "https://example.com"
+        });
+        const parsed = JSON.parse((result as any).content[0].text);
+        assert.strictEqual(parsed.status, "success");
+        assert.ok(parsed.details.includes("fingerprint spoofing"));
+    });
+
+    it("should handle ai media monetization suite", async () => {
+        const result = await handleEcommerceAiMediaMonetizationSuite({
+            productId: "P123",
+            style: "review",
+            bgmStyle: "lofi",
+            includeVoiceover: true
+        });
+        const parsed = JSON.parse((result as any).content[0].text);
+        assert.strictEqual(parsed.status, "success");
+        assert.ok(parsed.enhancements.length > 0);
+    });
+});
