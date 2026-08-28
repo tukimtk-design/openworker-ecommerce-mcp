@@ -1,4 +1,5 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
+import { handleEcommerceCapcutDraftAssembler } from "./tools/capcut-draft-assembler.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -487,6 +488,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_capcut_draft_assembler",
+        description: "Automated CapCut Draft JSON Assembler & Viral Hook Engine",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectName: { type: "string" },
+            mediaAssets: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  type: { type: "string", enum: ["image", "video", "audio"] },
+                  url: { type: "string" },
+                  durationSec: { type: "number" }
+                },
+                required: ["type", "url", "durationSec"]
+              }
+            },
+            voiceoverScript: { type: "string" },
+            hookStyle: { type: "string", enum: ["problem_solution", "shock_curiosity", "before_after", "flash_sale_urgency"] },
+            outputDirectory: { type: "string" }
+          },
+          required: ["projectName", "mediaAssets", "voiceoverScript", "hookStyle", "outputDirectory"]
+        }
       }
     ],
   };
@@ -596,6 +623,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_capcut_draft_assembler":
+      return await handleEcommerceCapcutDraftAssembler(args);
     default:
       return {
         content: [
