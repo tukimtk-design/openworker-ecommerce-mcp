@@ -20,6 +20,7 @@ import { handleEcommerceGetStoreMetrics } from "./tools/store-metrics.js";
 import { handleEcommerceBatchUpdatePriceStock } from "./tools/batch-update.js";
 import { handleEcommerceAuditLog } from "./tools/audit-log.js";
 import { handleEcommerceProductSearch } from "./tools/ecommerce-search.js";
+import { characterVaultManagerSchema, executeCharacterVaultManager } from "./tools/character-vault-manager.js";
 import { handleEcommerceUpdatePriceStock } from "./tools/ecommerce-update.js";
 import { handleEcommerceSafetyGuard } from "./tools/safety-guard.js";
 import { SessionExtractor } from "./services/session-extractor.js";
@@ -487,7 +488,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
-      }
+      },
+      characterVaultManagerSchema
     ],
   };
 });
@@ -596,6 +598,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ow_character_vault_manager":
+      return await executeCharacterVaultManager(args);
     default:
       return {
         content: [
