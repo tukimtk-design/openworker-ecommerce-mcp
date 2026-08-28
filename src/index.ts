@@ -1,4 +1,5 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
+import { handleStealthBrowserAutomation } from "./tools/stealth-browser-automation.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -487,6 +488,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_stealth_browser_automation",
+        description: "Launch stealth browser with profile lock detection and graceful recovery (Win32 supported)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            profilePath: { type: "string", description: "Path to the chrome user profile" },
+            headless: { type: "boolean", description: "Run in headless mode (default: true)" },
+            launchOptions: {
+              type: "object",
+              description: "Additional playwright launch options",
+              properties: {
+                _dummy: { type: "string" }
+              }
+            }
+          },
+          required: ["profilePath"]
+        }
       }
     ],
   };
@@ -596,6 +616,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_stealth_browser_automation":
+      return await handleStealthBrowserAutomation(args);
     default:
       return {
         content: [
