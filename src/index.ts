@@ -6,6 +6,7 @@ import { handleEcommerceGetPendingOrders, handleEcommerceFulfillOrder } from "./
 import { handleEcommerceManagePromotions } from "./tools/promotion-manager.js";
 import { handleEcommerceSyncProductImages } from "./tools/asset-sync.js";
 import { handleEcommerceVisualDomAnalysis } from "./tools/visual-analysis.js";
+import { handleEcommerceVideoGeneration } from "./tools/video-generation.js";
 import { handleEcommerceMatchVariants } from "./tools/variant-matcher.js";
 import { handleEcommerceSyncMultiplatformStock } from "./tools/multiplatform-sync.js";
 import { handleEcommerceContextCompressor } from "./tools/compressor.js";
@@ -487,6 +488,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_video_generation",
+        description: "Generate videos using Grok's video endpoint and Google Flow for automated rendering, prompt chaining, and timeline assembly for shorts",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["render", "chain_prompt", "assemble_timeline"] },
+            prompt: { type: "string" },
+            videoUrls: {
+              type: "array",
+              items: { type: "string" }
+            },
+            grokVideoEndpoint: { type: "string" },
+            flowConfig: {
+              type: "object",
+              properties: {
+                resolution: { type: "string" },
+                fps: { type: "number" },
+                _dummy: { type: "string" }
+              }
+            }
+          },
+          required: ["action"]
+        }
       }
     ],
   };
@@ -596,6 +622,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_video_generation":
+      return await handleEcommerceVideoGeneration(args);
     default:
       return {
         content: [
