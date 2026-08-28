@@ -20,6 +20,8 @@ import { handleEcommerceGetStoreMetrics } from "./tools/store-metrics.js";
 import { handleEcommerceBatchUpdatePriceStock } from "./tools/batch-update.js";
 import { handleEcommerceAuditLog } from "./tools/audit-log.js";
 import { handleEcommerceProductSearch } from "./tools/ecommerce-search.js";
+import { handleEcommerceBundleArbitrageEngine, BundleArbitrageEngineSchema } from "./tools/bundle-arbitrage-engine.js";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { handleEcommerceUpdatePriceStock } from "./tools/ecommerce-update.js";
 import { handleEcommerceSafetyGuard } from "./tools/safety-guard.js";
 import { SessionExtractor } from "./services/session-extractor.js";
@@ -487,6 +489,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_bundle_arbitrage_engine",
+        description: "Calculate Asymmetric Bundle Margin (combining items into a single high-ticket SKU) with Minimum Margin Shield.",
+        inputSchema: zodToJsonSchema(BundleArbitrageEngineSchema) as any
       }
     ],
   };
@@ -596,6 +603,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_bundle_arbitrage_engine": {
+      const parsedArgs = BundleArbitrageEngineSchema.safeParse(args);
+      if (!parsedArgs.success) {
+        throw new Error(`Invalid arguments for ecommerce_bundle_arbitrage_engine: ${parsedArgs.error.message}`);
+      }
+      return await handleEcommerceBundleArbitrageEngine(parsedArgs.data);
+    }
     default:
       return {
         content: [
