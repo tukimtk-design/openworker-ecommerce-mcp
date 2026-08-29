@@ -1,6 +1,7 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
+import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -528,6 +529,37 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "productId"]
         }
+      },
+      {
+        name: "ecommerce_google_ads_integration",
+        description: "Integrate Google Ads Campaign Payload dispatcher and offline conversion tracking for platforms like CapsuleFill (lnwshop)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            action: { type: "string", enum: ["dispatch_campaign", "track_offline_conversion"] },
+            campaignPayload: {
+              type: "object",
+              properties: {
+                campaignId: { type: "string" },
+                budget: { type: "number" },
+                targetAudience: {
+                  type: "array",
+                  items: { type: "string" }
+                }
+              }
+            },
+            conversionData: {
+              type: "object",
+              properties: {
+                transactionId: { type: "string" },
+                conversionValue: { type: "number" },
+                currencyCode: { type: "string" }
+              }
+            }
+          },
+          required: ["platform", "action"]
+        }
       }
     ],
   };
@@ -641,6 +673,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSeoOptimizer(args);
     case "ecommerce_ow_lnwshop_safe_seo_updater":
       return await handleEcommerceOwLnwshopSafeSeoUpdater(args);
+    case "ecommerce_google_ads_integration":
+      return await handleEcommerceGoogleAdsIntegration(args);
     default:
       return {
         content: [
