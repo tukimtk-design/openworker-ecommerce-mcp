@@ -1,4 +1,5 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
+import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -487,6 +488,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_ow_lnwshop_safe_seo_updater",
+        description: "Safe update for meta titles and keywords without disrupting live product layout.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["lnwshop"] },
+            productId: { type: "string" },
+            metaTitle: { type: "string" },
+            metaKeywords: {
+              type: "array",
+              items: {
+                type: "string"
+              }
+            },
+            metaDescription: { type: "string" }
+          },
+          required: ["platform", "productId"]
+        }
       }
     ],
   };
@@ -596,6 +617,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_ow_lnwshop_safe_seo_updater":
+      return await handleEcommerceOwLnwshopSafeSeoUpdater(args);
     default:
       return {
         content: [
