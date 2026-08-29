@@ -6,6 +6,9 @@ import { handleEcommerceSupportTriage } from "./tools/support-triage.js";
 import { handleEcommerceBiDashboardExport } from "./tools/bi-export.js";
 import { handleEcommerceCrossBorderCloner } from "./tools/cross-border.js";
 import { handleEcommerceHardwareHealthCheck } from "./tools/hardware-health.js";
+import { handleEcommerceAffiliateOutreach } from "./tools/affiliate-outreach.js";
+import { handleEcommerceAdsManager } from "./tools/ads-manager.js";
+import { handleEcommerceReturnDisputeHandler } from "./tools/return-dispute.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -602,6 +605,44 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             profileId: { type: "string" }
           }
         }
+      },
+      {
+        name: "ecommerce_affiliate_outreach",
+        description: "Find and send collaboration messages to influencers/affiliates.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            targetAudience: { type: "string" },
+            budget: { type: "number" }
+          },
+          required: ["platform", "targetAudience", "budget"]
+        }
+      },
+      {
+        name: "ecommerce_ads_manager",
+        description: "Automatically allocate budget and create ads for top-performing products.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            action: { type: "string", enum: ["create", "pause", "report"] },
+            campaignId: { type: "string" }
+          },
+          required: ["platform", "action"]
+        }
+      },
+      {
+        name: "ecommerce_return_dispute_handler",
+        description: "Analyze refund requests and automatically process or dispute them.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            returnId: { type: "string" },
+            evidenceUrl: { type: "string" }
+          },
+          required: ["returnId"]
+        }
       }
     ],
   };
@@ -727,6 +768,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceCrossBorderCloner(args);
     case "ecommerce_hardware_health_check":
       return await handleEcommerceHardwareHealthCheck(args);
+    case "ecommerce_affiliate_outreach":
+      return await handleEcommerceAffiliateOutreach(args);
+    case "ecommerce_ads_manager":
+      return await handleEcommerceAdsManager(args);
+    case "ecommerce_return_dispute_handler":
+      return await handleEcommerceReturnDisputeHandler(args);
     default:
       return {
         content: [
