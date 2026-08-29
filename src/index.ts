@@ -1,5 +1,6 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
+import { handleEcommerceAiSeoGenerator } from "./tools/ai-seo-generator.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -507,6 +508,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["htmlString"]
         }
+      },
+      {
+        name: "ecommerce_ai_seo_generator",
+        description: "AI-Powered SEO Content Generator for products",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productName: { type: "string" },
+            category: { type: "string" },
+            brand: { type: "string" },
+            price: { type: "number" },
+            currency: { type: "string" },
+            features: {
+              type: "array",
+              items: { type: "string" }
+            }
+          },
+          required: ["productName"]
+        }
       }
     ],
   };
@@ -618,6 +638,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceM365CopilotBridge(args);
     case "ecommerce_seo_optimizer":
       return await handleEcommerceSeoOptimizer(args);
+    case "ecommerce_ai_seo_generator":
+      return await handleEcommerceAiSeoGenerator(args);
     default:
       return {
         content: [
