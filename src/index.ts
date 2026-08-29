@@ -3,6 +3,9 @@ import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-upda
 import { handleEcommerceVideoGenerator, handleEcommerceSocialMediaUploader } from "./tools/video-pipeline.js";
 import { handleEcommerceDynamicPricingEngine } from "./tools/dynamic-pricing.js";
 import { handleEcommerceSupportTriage } from "./tools/support-triage.js";
+import { handleEcommerceBiDashboardExport } from "./tools/bi-export.js";
+import { handleEcommerceCrossBorderCloner } from "./tools/cross-border.js";
+import { handleEcommerceHardwareHealthCheck } from "./tools/hardware-health.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -566,6 +569,39 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["customerMessage"]
         }
+      },
+      {
+        name: "ecommerce_bi_dashboard_export",
+        description: "Generate and export business intelligence metrics in JSON/CSV format.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            format: { type: "string", enum: ["json", "csv"], default: "json" }
+          }
+        }
+      },
+      {
+        name: "ecommerce_cross_border_cloner",
+        description: "Prepare product for cross-border cloning with currency conversion and localization.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sourceProductId: { type: "string" },
+            targetRegion: { type: "string", enum: ["MY", "SG", "VN"] },
+            basePrice: { type: "number" }
+          },
+          required: ["sourceProductId", "targetRegion", "basePrice"]
+        }
+      },
+      {
+        name: "ecommerce_hardware_health_check",
+        description: "Monitor hardware health, memory usage, and browser profile cookie expiration.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            profileId: { type: "string" }
+          }
+        }
       }
     ],
   };
@@ -685,6 +721,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceDynamicPricingEngine(args);
     case "ecommerce_support_triage":
       return await handleEcommerceSupportTriage(args);
+    case "ecommerce_bi_dashboard_export":
+      return await handleEcommerceBiDashboardExport(args);
+    case "ecommerce_cross_border_cloner":
+      return await handleEcommerceCrossBorderCloner(args);
+    case "ecommerce_hardware_health_check":
+      return await handleEcommerceHardwareHealthCheck(args);
     default:
       return {
         content: [
