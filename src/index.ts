@@ -1,5 +1,8 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
+import { handleEcommerceVideoGenerator, handleEcommerceSocialMediaUploader } from "./tools/video-pipeline.js";
+import { handleEcommerceDynamicPricingEngine } from "./tools/dynamic-pricing.js";
+import { handleEcommerceSupportTriage } from "./tools/support-triage.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -508,6 +511,61 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "productId"]
         }
+      },
+      {
+        name: "ecommerce_video_generator",
+        description: "Generates a promotional video using Grok's video endpoint and Google Flow",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string" },
+            prompt: { type: "string" },
+            style: { type: "string", default: "cinematic" }
+          },
+          required: ["productId", "prompt"]
+        }
+      },
+      {
+        name: "ecommerce_social_media_uploader",
+        description: "Uploads generated video to Facebook Reels and YouTube Shorts",
+        inputSchema: {
+          type: "object",
+          properties: {
+            videoId: { type: "string" },
+            targetPlatforms: {
+              type: "array",
+              items: { type: "string", enum: ["facebook_reels", "youtube_shorts"] }
+            },
+            caption: { type: "string" }
+          },
+          required: ["videoId", "targetPlatforms"]
+        }
+      },
+      {
+        name: "ecommerce_dynamic_pricing_engine",
+        description: "Analyze competitor prices and suggest/apply pricing updates based on safety guards.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            competitorUrl: { type: "string" },
+            minPriceLimit: { type: "number" }
+          },
+          required: ["platform", "productId", "competitorUrl"]
+        }
+      },
+      {
+        name: "ecommerce_support_triage",
+        description: "Advanced Customer Support Triage System for sentiment analysis and context-aware replies.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            customerMessage: { type: "string" },
+            orderId: { type: "string" }
+          },
+          required: ["customerMessage"]
+        }
       }
     ],
   };
@@ -619,6 +677,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceM365CopilotBridge(args);
     case "ecommerce_ow_lnwshop_safe_seo_updater":
       return await handleEcommerceOwLnwshopSafeSeoUpdater(args);
+    case "ecommerce_video_generator":
+      return await handleEcommerceVideoGenerator(args);
+    case "ecommerce_social_media_uploader":
+      return await handleEcommerceSocialMediaUploader(args);
+    case "ecommerce_dynamic_pricing_engine":
+      return await handleEcommerceDynamicPricingEngine(args);
+    case "ecommerce_support_triage":
+      return await handleEcommerceSupportTriage(args);
     default:
       return {
         content: [
