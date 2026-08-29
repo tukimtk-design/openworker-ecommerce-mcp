@@ -4,6 +4,7 @@ import { handleEcommerceAiSeoGenerator } from "./tools/ai-seo-generator.js";
 import { handleEcommerceSeoAuditor } from "./tools/seo-auditor.js";
 import { handleEcommerceSitemapRssGenerator } from "./tools/sitemap-rss-generator.js";
 import { handleEcommerceSeoE2eWorkflow } from "./tools/seo-e2e-workflow.js";
+import { handleEcommerceSeoPlatformDeployer } from "./tools/seo-platform-deployer.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -614,6 +615,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["htmlString", "productDetails"]
         }
+      },
+      {
+        name: "ecommerce_seo_platform_deployer",
+        description: "Deploys optimized SEO content (Title, Description) to e-commerce platforms",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            seoTitle: { type: "string" },
+            seoDescription: { type: "string" }
+          },
+          required: ["platform", "productId"]
+        }
       }
     ],
   };
@@ -733,6 +748,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSitemapRssGenerator(args);
     case "ecommerce_seo_e2e_workflow":
       return await handleEcommerceSeoE2eWorkflow(args);
+    case "ecommerce_seo_platform_deployer":
+      return await handleEcommerceSeoPlatformDeployer(args);
     default:
       return {
         content: [
