@@ -7,6 +7,9 @@ import { handleEcommerceSeoE2eWorkflow } from "./tools/seo-e2e-workflow.js";
 import { handleEcommerceSeoPlatformDeployer } from "./tools/seo-platform-deployer.js";
 import { handleEcommerceCompetitorSeoAnalyzer } from "./tools/competitor-seo-analyzer.js";
 import { handleEcommerceSeoPerformanceAnalytics } from "./tools/seo-performance-analytics.js";
+import { handleEcommerceSocialMediaPoster } from "./tools/social-media-poster.js";
+import { handleEcommerceVideoGenerationPipeline } from "./tools/video-generation-pipeline.js";
+import { handleEcommerceReviewAnalyzer } from "./tools/review-analyzer.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -657,6 +660,55 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "productId"]
         }
+      },
+      {
+        name: "ecommerce_social_media_poster",
+        description: "Simulates auto-posting SEO content and media to Facebook Reels, YouTube Shorts, etc.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["facebook_reels", "youtube_shorts", "instagram_reels", "tiktok"] },
+            contentText: { type: "string" },
+            mediaUrls: { type: "array", items: { type: "string" } },
+            link: { type: "string" }
+          },
+          required: ["platform", "contentText"]
+        }
+      },
+      {
+        name: "ecommerce_video_generation_pipeline",
+        description: "Generates a promotional video script and URL using Grok and Google Flow",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productTitle: { type: "string" },
+            productDescription: { type: "string" },
+            productImages: { type: "array", items: { type: "string" } }
+          },
+          required: ["productTitle", "productDescription"]
+        }
+      },
+      {
+        name: "ecommerce_review_analyzer",
+        description: "Analyzes customer reviews to provide SEO content recommendations",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string" },
+            reviews: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rating: { type: "number" },
+                  text: { type: "string" }
+                },
+                required: ["rating"]
+              }
+            }
+          },
+          required: ["productId", "reviews"]
+        }
       }
     ],
   };
@@ -782,6 +834,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceCompetitorSeoAnalyzer(args);
     case "ecommerce_seo_performance_analytics":
       return await handleEcommerceSeoPerformanceAnalytics(args);
+    case "ecommerce_social_media_poster":
+      return await handleEcommerceSocialMediaPoster(args);
+    case "ecommerce_video_generation_pipeline":
+      return await handleEcommerceVideoGenerationPipeline(args);
+    case "ecommerce_review_analyzer":
+      return await handleEcommerceReviewAnalyzer(args);
     default:
       return {
         content: [
