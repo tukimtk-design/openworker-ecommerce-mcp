@@ -1,4 +1,5 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
+import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -487,6 +488,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_seo_optimizer",
+        description: "Fast HTML DOM parsing and rewriting to generate entity-based JSON-LD schemas and optimize on-page SEO",
+        inputSchema: {
+          type: "object",
+          properties: {
+            htmlString: { type: "string" },
+            title: { type: "string" },
+            description: { type: "string" },
+            entityType: { type: "string", enum: ["Product", "Organization", "Article"] },
+            entityData: {
+              type: "object",
+              properties: { _dummy: { type: "string" } },
+              additionalProperties: true
+            }
+          },
+          required: ["htmlString"]
+        }
       }
     ],
   };
@@ -596,6 +616,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_seo_optimizer":
+      return await handleEcommerceSeoOptimizer(args);
     default:
       return {
         content: [
