@@ -5,6 +5,7 @@ import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
 import { handleEcommerceGetPendingOrders, handleEcommerceFulfillOrder } from "./tools/order-fulfillment.js";
 import { handleEcommerceManagePromotions } from "./tools/promotion-manager.js";
 import { handleEcommerceSyncProductImages } from "./tools/asset-sync.js";
+import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
 import { handleEcommerceVisualDomAnalysis } from "./tools/visual-analysis.js";
 import { handleEcommerceMatchVariants } from "./tools/variant-matcher.js";
 import { handleEcommerceSyncMultiplatformStock } from "./tools/multiplatform-sync.js";
@@ -487,6 +488,37 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_google_ads_integration",
+        description: "Integrate Google Ads Campaign Payload dispatcher and offline conversion tracking for platforms like CapsuleFill (lnwshop)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            action: { type: "string", enum: ["dispatch_campaign", "track_offline_conversion"] },
+            campaignPayload: {
+              type: "object",
+              properties: {
+                campaignId: { type: "string" },
+                budget: { type: "number" },
+                targetAudience: {
+                  type: "array",
+                  items: { type: "string" }
+                }
+              }
+            },
+            conversionData: {
+              type: "object",
+              properties: {
+                transactionId: { type: "string" },
+                conversionValue: { type: "number" },
+                currencyCode: { type: "string" }
+              }
+            }
+          },
+          required: ["platform", "action"]
+        }
       }
     ],
   };
@@ -596,6 +628,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSyncProductImages(args);
     case "ecommerce_m365_copilot_bridge":
       return await handleEcommerceM365CopilotBridge(args);
+    case "ecommerce_google_ads_integration":
+      return await handleEcommerceGoogleAdsIntegration(args);
     default:
       return {
         content: [
