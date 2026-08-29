@@ -1,6 +1,9 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceAiSeoGenerator } from "./tools/ai-seo-generator.js";
+import { handleEcommerceSeoAuditor } from "./tools/seo-auditor.js";
+import { handleEcommerceSitemapRssGenerator } from "./tools/sitemap-rss-generator.js";
+import { handleEcommerceSeoE2eWorkflow } from "./tools/seo-e2e-workflow.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -527,6 +530,90 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["productName"]
         }
+      },
+      {
+        name: "ecommerce_seo_auditor",
+        description: "SEO Audit and Scoring tool for HTML content",
+        inputSchema: {
+          type: "object",
+          properties: {
+            htmlString: { type: "string" }
+          },
+          required: ["htmlString"]
+        }
+      },
+      {
+        name: "ecommerce_sitemap_rss_generator",
+        description: "Advanced Sitemap & RSS Feed Generator for e-commerce sites",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["sitemap", "rss"] },
+            sitemapItems: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  url: { type: "string" },
+                  lastmod: { type: "string" },
+                  changefreq: { type: "string" },
+                  priority: { type: "number" }
+                },
+                required: ["url"]
+              }
+            },
+            rssChannel: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                link: { type: "string" }
+              },
+              required: ["title", "description", "link"]
+            },
+            rssItems: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  link: { type: "string" },
+                  pubDate: { type: "string" },
+                  guid: { type: "string" }
+                },
+                required: ["title", "description", "link"]
+              }
+            }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_seo_e2e_workflow",
+        description: "Automated SEO E2E Workflow combining Generation, Optimization, and Auditing",
+        inputSchema: {
+          type: "object",
+          properties: {
+            htmlString: { type: "string" },
+            productDetails: {
+              type: "object",
+              properties: {
+                productName: { type: "string" },
+                category: { type: "string" },
+                brand: { type: "string" },
+                price: { type: "number" },
+                currency: { type: "string" },
+                features: {
+                  type: "array",
+                  items: { type: "string" }
+                }
+              },
+              required: ["productName"]
+            }
+          },
+          required: ["htmlString", "productDetails"]
+        }
       }
     ],
   };
@@ -640,6 +727,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSeoOptimizer(args);
     case "ecommerce_ai_seo_generator":
       return await handleEcommerceAiSeoGenerator(args);
+    case "ecommerce_seo_auditor":
+      return await handleEcommerceSeoAuditor(args);
+    case "ecommerce_sitemap_rss_generator":
+      return await handleEcommerceSitemapRssGenerator(args);
+    case "ecommerce_seo_e2e_workflow":
+      return await handleEcommerceSeoE2eWorkflow(args);
     default:
       return {
         content: [
