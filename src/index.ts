@@ -5,6 +5,8 @@ import { handleEcommerceSeoAuditor } from "./tools/seo-auditor.js";
 import { handleEcommerceSitemapRssGenerator } from "./tools/sitemap-rss-generator.js";
 import { handleEcommerceSeoE2eWorkflow } from "./tools/seo-e2e-workflow.js";
 import { handleEcommerceSeoPlatformDeployer } from "./tools/seo-platform-deployer.js";
+import { handleEcommerceCompetitorSeoAnalyzer } from "./tools/competitor-seo-analyzer.js";
+import { handleEcommerceSeoPerformanceAnalytics } from "./tools/seo-performance-analytics.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -629,6 +631,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "productId"]
         }
+      },
+      {
+        name: "ecommerce_competitor_seo_analyzer",
+        description: "Compares our store's SEO score against a competitor's page",
+        inputSchema: {
+          type: "object",
+          properties: {
+            ourHtmlString: { type: "string" },
+            competitorHtmlString: { type: "string" },
+            competitorName: { type: "string" }
+          },
+          required: ["ourHtmlString", "competitorHtmlString"]
+        }
+      },
+      {
+        name: "ecommerce_seo_performance_analytics",
+        description: "Retrieves SEO performance metrics (traffic, CTR) for a product",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string" },
+            productId: { type: "string" },
+            daysToAnalyze: { type: "number" }
+          },
+          required: ["platform", "productId"]
+        }
       }
     ],
   };
@@ -750,6 +778,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSeoE2eWorkflow(args);
     case "ecommerce_seo_platform_deployer":
       return await handleEcommerceSeoPlatformDeployer(args);
+    case "ecommerce_competitor_seo_analyzer":
+      return await handleEcommerceCompetitorSeoAnalyzer(args);
+    case "ecommerce_seo_performance_analytics":
+      return await handleEcommerceSeoPerformanceAnalytics(args);
     default:
       return {
         content: [
