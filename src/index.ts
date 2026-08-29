@@ -6,6 +6,9 @@ import { handleEcommerceGetPendingOrders, handleEcommerceFulfillOrder } from "./
 import { handleEcommerceManagePromotions } from "./tools/promotion-manager.js";
 import { handleEcommerceSyncProductImages } from "./tools/asset-sync.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
+import { handleEcommerceDynamicPricing } from "./tools/dynamic-pricing.js";
+import { handleEcommerceOrderAggregator } from "./tools/order-aggregator.js";
+import { handleEcommerceReviewSentiment } from "./tools/review-sentiment.js";
 import { handleEcommerceVisualDomAnalysis } from "./tools/visual-analysis.js";
 import { handleEcommerceMatchVariants } from "./tools/variant-matcher.js";
 import { handleEcommerceSyncMultiplatformStock } from "./tools/multiplatform-sync.js";
@@ -519,6 +522,57 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "action"]
         }
+      },
+      {
+        name: "ecommerce_dynamic_pricing",
+        description: "Dynamic Pricing Engine to adjust product prices based on competitors while respecting a floor price.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            currentPrice: { type: "number" },
+            competitorPrice: { type: "number" },
+            floorPrice: { type: "number" }
+          },
+          required: ["platform", "productId", "currentPrice", "competitorPrice", "floorPrice"]
+        }
+      },
+      {
+        name: "ecommerce_order_aggregator",
+        description: "Omni-Channel Order Aggregator to fetch pending orders from multiple platforms and centrally allocate stock.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platforms: {
+              type: "array",
+              items: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] }
+            },
+            action: { type: "string", enum: ["aggregate_pending", "allocate_stock"] },
+            globalStockMap: {
+              type: "object",
+              properties: { _dummy: { type: "string" } },
+              additionalProperties: true
+            }
+          },
+          required: ["platforms", "action"]
+        }
+      },
+      {
+        name: "ecommerce_review_sentiment",
+        description: "Sentiment Analysis on Product Reviews to classify feedback as positive, negative, or neutral.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            reviews: {
+              type: "array",
+              items: { type: "string" }
+            }
+          },
+          required: ["platform", "productId", "reviews"]
+        }
       }
     ],
   };
@@ -630,6 +684,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceM365CopilotBridge(args);
     case "ecommerce_google_ads_integration":
       return await handleEcommerceGoogleAdsIntegration(args);
+    case "ecommerce_dynamic_pricing":
+      return await handleEcommerceDynamicPricing(args);
+    case "ecommerce_order_aggregator":
+      return await handleEcommerceOrderAggregator(args);
+    case "ecommerce_review_sentiment":
+      return await handleEcommerceReviewSentiment(args);
     default:
       return {
         content: [
