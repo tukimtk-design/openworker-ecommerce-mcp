@@ -10,6 +10,7 @@ import { handleEcommerceSeoPerformanceAnalytics } from "./tools/seo-performance-
 import { handleEcommerceSocialMediaPoster } from "./tools/social-media-poster.js";
 import { handleEcommerceVideoGenerationPipeline } from "./tools/video-generation-pipeline.js";
 import { handleEcommerceReviewAnalyzer } from "./tools/review-analyzer.js";
+import { handleEcommerceProfitableSocialPoster } from "./tools/profitable-social-poster.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -709,6 +710,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["productId", "reviews"]
         }
+      },
+      {
+        name: "ecommerce_profitable_social_poster",
+        description: "Analyzes trends locally to save tokens, generates the most profitable selling angle, and auto-posts it.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productName: { type: "string" },
+            targetUrl: { type: "string" },
+            rawTrends: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  keyword: { type: "string" },
+                  searchVolume: { type: "number" },
+                  competition: { type: "number" },
+                  cpc: { type: "number" }
+                },
+                required: ["keyword", "searchVolume", "competition", "cpc"]
+              }
+            }
+          },
+          required: ["productName", "rawTrends"]
+        }
       }
     ],
   };
@@ -840,6 +866,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceVideoGenerationPipeline(args);
     case "ecommerce_review_analyzer":
       return await handleEcommerceReviewAnalyzer(args);
+    case "ecommerce_profitable_social_poster":
+      return await handleEcommerceProfitableSocialPoster(args);
     default:
       return {
         content: [
