@@ -110,18 +110,26 @@ if (!toolsArrayNode) {
   process.exit(1);
 }
 
-function astToObject(node) {
+// Deterministic AST to Object mapping
+function astToObject(node, pathStr) {
   if (ts.isObjectLiteralExpression(node)) {
     const obj = {};
     for (const prop of node.properties) {
       if (ts.isPropertyAssignment(prop)) {
         const key = prop.name.text || prop.name.escapedText;
-        obj[key] = astToObject(prop.initializer);
+        if (!key) {
+           console.error(`Unsupported object key kind ${prop.name.kind} at ${pathStr}`);
+           process.exit(1);
+        }
+        obj[key] = astToObject(prop.initializer, `${pathStr}.${key}`);
+      } else {
+        console.error(`Unsupported object property kind ${prop.kind} at ${pathStr}`);
+        process.exit(1);
       }
     }
     return obj;
   } else if (ts.isArrayLiteralExpression(node)) {
-    return node.elements.map(astToObject);
+    return node.elements.map((el, idx) => astToObject(el, `${pathStr}[${idx}]`));
   } else if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
     return node.text;
   } else if (ts.isNumericLiteral(node)) {
@@ -132,55 +140,33 @@ function astToObject(node) {
     return false;
   } else if (node.kind === ts.SyntaxKind.NullKeyword) {
     return null;
+  } else if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.MinusToken && ts.isNumericLiteral(node.operand)) {
+    return -Number(node.operand.text);
   }
-  return undefined;
+
+  console.error(`Unsupported AST Node kind: ${node.kind} at path: ${pathStr}`);
+  console.error(`Source text: ${node.getText(sourceFile)}`);
+  process.exit(1);
 }
 
-const rawTools = toolsArrayNode.elements.map(astToObject).filter(t => t && t.name);
+const rawTools = toolsArrayNode.elements.map((el, i) => astToObject(el, `tools[${i}]`));
 
-// Filter out openworker-ecommerce-mcp info tool if it exists to make exactly 32 canonical action tools.
-// Or wait, looking at `src/index.ts`, the first tool is `openworker-ecommerce-mcp` describing the server itself.
-// We should probably filter it out to meet exactly 32.
-const tools = rawTools.filter(t => t.name.startsWith("ecommerce_") || t.name.startsWith("browser_"));
-
-function fixSchema(node) {
-  if (!node || typeof node !== "object") return;
-
-  if (node.type === "object") {
-    if (!node.properties) {
-       node.properties = { _dummy: { type: "string" } };
-       node.additionalProperties = true;
-    }
-    if (!node.required) {
-      node.required = [];
-    }
-    for (const key in node.properties) {
-       fixSchema(node.properties[key]);
-    }
-  } else if (node.type === "array") {
-    if (!node.items) {
-       node.items = { type: "string" };
-    }
-    fixSchema(node.items);
-  }
+if (rawTools.length === 0) {
+  console.error("Extraction incomplete. No tools found.");
+  process.exit(1);
 }
 
-tools.forEach(t => {
-  if (t.inputSchema) {
-     fixSchema(t.inputSchema);
-  } else {
-     t.inputSchema = { type: "object", properties: { _dummy: { type: "string" } }, additionalProperties: true, required: [] };
-  }
-});
+// Filter out openworker-ecommerce-mcp server info
+const tools = rawTools.filter(t => t.name !== "openworker-ecommerce-mcp");
+
+if (tools.length !== 32) {
+  console.error(`Expected exactly 32 canonical tools, found ${tools.length}`);
+  process.exit(1);
+}
 
 const uniqueNames = new Set(tools.map(t => t.name));
 if (uniqueNames.size !== tools.length) {
-   console.error("Duplicate tools found during extraction.");
-   process.exit(1);
-}
-
-if (tools.length !== 32) {
-   console.error(`Expected exactly 32 tools, found ${tools.length}`);
+   console.error("Duplicate tool names found during extraction.");
    process.exit(1);
 }
 
@@ -189,4 +175,4 @@ fs.writeFileSync(
   JSON.stringify({ tools }, null, 2)
 );
 
-console.log("Successfully extracted 32 canonical tools using AST parsing.");
+console.log(`Successfully extracted ${tools.length} canonical tools via deterministic AST parsing.`);

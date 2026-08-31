@@ -15,7 +15,7 @@ export const ToolsExplorer = () => {
   const [error, setError] = useState(false);
 
   const [testPayload, setTestPayload] = useState('');
-  const [testResult, setTestResult] = useState<{valid: boolean, msg: string} | null>(null);
+  const [testResult, setTestResult] = useState<{valid: boolean, messages: string[]} | null>(null);
 
   const baseUrl = import.meta.env.BASE_URL;
 
@@ -38,13 +38,64 @@ export const ToolsExplorer = () => {
     return matchesSearch && matchesPlatform;
   });
 
+  const validateLocalPayload = (payload: any, schema: any, path: string, msgs: string[]) => {
+      if (schema.type === 'object') {
+          if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+             msgs.push(`[Payload Error] Expected object at ${path}`);
+             return;
+          }
+          if (schema.required) {
+             schema.required.forEach((req: string) => {
+                if (!(req in payload)) {
+                   msgs.push(`[Payload Error] Missing required property "${req}" at ${path}`);
+                }
+             });
+          }
+          if (schema.properties) {
+             Object.keys(payload).forEach(key => {
+                 if (schema.properties[key]) {
+                     validateLocalPayload(payload[key], schema.properties[key], `${path}.${key}`, msgs);
+                 } else if (schema.additionalProperties !== true && key !== '_dummy') {
+                     msgs.push(`[Payload Error] Unknown property "${key}" at ${path}`);
+                 }
+             });
+          }
+      } else if (schema.type === 'array') {
+          if (!Array.isArray(payload)) {
+              msgs.push(`[Payload Error] Expected array at ${path}`);
+              return;
+          }
+          if (schema.items) {
+              payload.forEach((item, idx) => {
+                 validateLocalPayload(item, schema.items, `${path}[${idx}]`, msgs);
+              });
+          }
+      } else if (schema.type === 'string') {
+          if (typeof payload !== 'string') msgs.push(`[Payload Error] Expected string at ${path}`);
+          if (schema.enum && !schema.enum.includes(payload)) {
+              msgs.push(`[Payload Error] Invalid enum value "${payload}" at ${path}. Expected one of: ${schema.enum.join(', ')}`);
+          }
+      } else if (schema.type === 'number' || schema.type === 'integer') {
+          if (typeof payload !== 'number') msgs.push(`[Payload Error] Expected number at ${path}`);
+      } else if (schema.type === 'boolean') {
+          if (typeof payload !== 'boolean') msgs.push(`[Payload Error] Expected boolean at ${path}`);
+      }
+  };
+
   const runTestPayload = () => {
+     if (!selectedTool) return;
      try {
-       JSON.parse(testPayload);
-       // Simple local JSON parse check for now
-       setTestResult({ valid: true, msg: "Payload JSON format is valid (Local Test Only)." });
+       const parsed = JSON.parse(testPayload);
+       const msgs: string[] = [];
+       validateLocalPayload(parsed, selectedTool.inputSchema, 'root', msgs);
+
+       if (msgs.length === 0) {
+           setTestResult({ valid: true, messages: ["Payload schema validation passed (Local)."] });
+       } else {
+           setTestResult({ valid: false, messages: msgs });
+       }
      } catch (e: any) {
-       setTestResult({ valid: false, msg: "Invalid JSON: " + e.message });
+       setTestResult({ valid: false, messages: ["Malformed JSON: " + e.message] });
      }
   };
 
@@ -150,9 +201,12 @@ export const ToolsExplorer = () => {
                        <div className="flex items-center justify-between">
                          <button onClick={runTestPayload} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded">Validate Payload</button>
                          {testResult && (
-                           <div className={`flex items-center gap-2 text-xs ${testResult.valid ? 'text-emerald-400' : 'text-red-400'}`}>
-                             {testResult.valid ? <ShieldCheck size={14} /> : <AlertTriangle size={14} />}
-                             {testResult.msg}
+                           <div className={`flex flex-col gap-1 text-xs ${testResult.valid ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {testResult.messages.map((m, idx) => (
+                                 <span key={idx} className="flex items-center gap-1">
+                                    {testResult.valid ? <ShieldCheck size={14} /> : <AlertTriangle size={14} />} {m}
+                                 </span>
+                              ))}
                            </div>
                          )}
                        </div>

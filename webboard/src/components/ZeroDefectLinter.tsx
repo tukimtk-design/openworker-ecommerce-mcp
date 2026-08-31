@@ -27,10 +27,7 @@ export const ZeroDefectLinter = () => {
         if (node.type === 'object') {
            if (!node.properties) {
               valid = false;
-              msgs.push(`[Error] Object at "${path}" is missing "properties". Use _dummy property if dynamic.`);
-           } else if (Object.keys(node.properties).length === 0) {
-              // It's empty, but if it has additionalProperties, they might consider it dynamic. Vertex strictly wants properties.
-              // We'll let it slide if properties exists, but they probably need _dummy
+              msgs.push(`[Error] Object at "${path}" is missing "properties".`);
            }
 
            if (!node.required) {
@@ -38,10 +35,16 @@ export const ZeroDefectLinter = () => {
               msgs.push(`[Error] Object at "${path}" is missing "required" array.`);
            }
 
-           // Check for dynamic _dummy requirements if it has additionalProperties: true but no actual properties
-           if (node.additionalProperties === true && node.properties && !node.properties['_dummy'] && Object.keys(node.properties).length === 0) {
-              valid = false;
-              msgs.push(`[Error] Dynamic object at "${path}" is missing "_dummy" or "additionalProperties: true".`);
+           if (node.additionalProperties === true) {
+              if (!node.properties || !node.properties['_dummy']) {
+                  valid = false;
+                  msgs.push(`[Error] Dynamic object at "${path}" is missing "_dummy" property.`);
+              }
+           } else {
+              if (node.properties && node.properties['_dummy']) {
+                  valid = false;
+                  msgs.push(`[Error] Ordinary fixed object at "${path}" contains "_dummy" but is not dynamic (missing additionalProperties: true).`);
+              }
            }
         }
 
@@ -49,20 +52,17 @@ export const ZeroDefectLinter = () => {
            valid = false;
            msgs.push(`[Error] Node at "${path}" contains prohibited "$schema".`);
         }
-
         if (node['$ref']) {
            valid = false;
            msgs.push(`[Error] Node at "${path}" contains prohibited "$ref".`);
         }
-
         if (node.patternProperties) {
            valid = false;
            msgs.push(`[Error] Node at "${path}" contains prohibited "patternProperties".`);
         }
-
         if (node.anyOf || node.allOf || node.oneOf) {
            valid = false;
-           msgs.push(`[Error] Node at "${path}" contains prohibited complex nested anyOf/allOf/oneOf.`);
+           msgs.push(`[Error] Node at "${path}" contains prohibited complex logic (anyOf/allOf/oneOf).`);
         }
 
         if (node.properties) {
@@ -80,7 +80,7 @@ export const ZeroDefectLinter = () => {
       if (valid && msgs.length === 0) {
         setResult({ valid: true, messages: ['Schema ผ่านเกณฑ์ Zero-Defect Protocol 100%'] });
       } else {
-        setResult({ valid: false, messages: msgs }); // Never claim passed if warnings/errors exist
+        setResult({ valid: false, messages: msgs });
       }
     } catch (e: any) {
       setResult({ valid: false, messages: [`Invalid JSON: ${e.message}`] });

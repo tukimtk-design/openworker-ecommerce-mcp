@@ -16,39 +16,52 @@ if (tools.length !== 32) {
 
 let violations = 0;
 
-const checkNode = (node, path) => {
+// This function will both check and repair the node as required by Binding Finding 3
+const checkAndRepairNode = (node, pathStr) => {
     if (!node || typeof node !== 'object') return;
 
     if (node.type === 'array' && !node.items) {
-        console.error(`[VIOLATION] Array at "${path}" is missing "items"`);
-        violations++;
+        console.warn(`[REPAIR] Array at "${pathStr}" is missing "items". Adding items: {type: 'string'}`);
+        node.items = { type: 'string' }; // Safe dummy
     }
 
     if (node.type === 'object') {
         if (!node.properties) {
-            console.error(`[VIOLATION] Object at "${path}" is missing "properties"`);
-            violations++;
+            console.warn(`[REPAIR] Object at "${pathStr}" is missing "properties". Making it dynamic.`);
+            node.properties = { _dummy: { type: 'string' } };
+            node.additionalProperties = true;
         }
+
         if (!node.required) {
-            console.error(`[VIOLATION] Object at "${path}" is missing "required"`);
-            violations++;
+            console.warn(`[REPAIR] Object at "${pathStr}" is missing "required". Adding required: []`);
+            node.required = [];
         }
-        if (node.additionalProperties === true && node.properties && !node.properties['_dummy'] && Object.keys(node.properties).length === 0) {
-            console.error(`[VIOLATION] Dynamic object at "${path}" is missing "_dummy" property`);
-            violations++;
+
+        // Dynamic Object Rule Check
+        if (node.additionalProperties === true) {
+            if (!node.properties || !node.properties['_dummy']) {
+                console.warn(`[REPAIR] Dynamic object at "${pathStr}" is missing "_dummy". Adding it.`);
+                node.properties = node.properties || {};
+                node.properties['_dummy'] = { type: 'string' };
+            }
+        } else {
+           if (node.properties && node.properties['_dummy']) {
+                console.warn(`[REPAIR] Ordinary object at "${pathStr}" contains "_dummy" but is not dynamic. Setting additionalProperties: true.`);
+                node.additionalProperties = true;
+           }
         }
     }
 
-    if (node['$schema']) { console.error(`[VIOLATION] Node at "${path}" contains "$schema"`); violations++; }
-    if (node['$ref']) { console.error(`[VIOLATION] Node at "${path}" contains "$ref"`); violations++; }
-    if (node.patternProperties) { console.error(`[VIOLATION] Node at "${path}" contains "patternProperties"`); violations++; }
-    if (node.anyOf || node.allOf || node.oneOf) { console.error(`[VIOLATION] Node at "${path}" contains complex logic`); violations++; }
+    if (node['$schema']) { console.error(`[VIOLATION] Node at "${pathStr}" contains "$schema"`); violations++; }
+    if (node['$ref']) { console.error(`[VIOLATION] Node at "${pathStr}" contains "$ref"`); violations++; }
+    if (node.patternProperties) { console.error(`[VIOLATION] Node at "${pathStr}" contains "patternProperties"`); violations++; }
+    if (node.anyOf || node.allOf || node.oneOf) { console.error(`[VIOLATION] Node at "${pathStr}" contains complex logic`); violations++; }
 
     if (node.properties) {
-        Object.keys(node.properties).forEach(k => checkNode(node.properties[k], `${path}.${k}`));
+        Object.keys(node.properties).forEach(k => checkAndRepairNode(node.properties[k], `${pathStr}.${k}`));
     }
     if (node.items) {
-        checkNode(node.items, `${path}[items]`);
+        checkAndRepairNode(node.items, `${pathStr}[items]`);
     }
 };
 
@@ -57,12 +70,21 @@ tools.forEach(t => {
         console.error(`[VIOLATION] Invalid legacy namespace exception for tool: ${t.name}`);
         violations++;
     }
-    checkNode(t.inputSchema, t.name);
+
+    if (!t.inputSchema) {
+        console.warn(`[REPAIR] Tool ${t.name} is missing inputSchema`);
+        t.inputSchema = { type: 'object', properties: { _dummy: { type: 'string' } }, additionalProperties: true, required: [] };
+    } else {
+        checkAndRepairNode(t.inputSchema, t.name);
+    }
 });
 
 if (violations > 0) {
-    console.error(`\nValidation Failed with ${violations} Zero-Defect Violations.`);
+    console.error(`\nValidation Failed with ${violations} unrepairable Zero-Defect Violations.`);
     process.exit(1);
 }
 
-console.log("Extracted schema passed Zero-Defect recursive validation (100% Strict).");
+// Write the repaired data back to ensure it serves a compliant schema
+fs.writeFileSync(targetPath, JSON.stringify(data, null, 2));
+
+console.log("Extracted schema passed Zero-Defect recursive validation and repair (100% Strict).");

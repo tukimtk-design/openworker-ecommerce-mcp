@@ -246,9 +246,7 @@
                 "type": "string"
               }
             },
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": true,
             "required": []
           }
         },
@@ -268,7 +266,8 @@
             "description": "Dummy parameter to satisfy strict schema requirements"
           }
         },
-        "required": []
+        "required": [],
+        "additionalProperties": true
       }
     },
     {
