@@ -1,0 +1,10 @@
+Openworker E-Commerce MCP Project
+
+A powerful toolset for managing Shopee, TikTok Shop, Lazada, and LnwShop stores via AI Agents.
+Utilizes Playwright to automate CDP browser actions, with local fallback caches and visual auto-correction.
+This acts as a definitive context file for LLM crawlers reading this hub.
+
+Key rules:
+- Schemas strictly typed for Vertex AI.
+- Thai output default.
+- stdio log streaming using console.error only.

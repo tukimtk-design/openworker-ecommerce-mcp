@@ -9,7 +9,10 @@
     "start": "node dist/index.js",
     "dev": "tsc --watch",
     "test": "node --test dist/**/*.test.js",
-    "test:tools": "node scripts/test-all-tools.js"
+    "test:tools": "node scripts/test-all-tools.js",
+    "webboard:dev": "cd webboard && npm run dev",
+    "webboard:build": "cd webboard && npm run build",
+    "webboard:serve": "cd webboard && npm run preview"
   },
   "keywords": [
     "mcp",
@@ -35,6 +38,6 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/sqlite3": "^3.1.11",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   }
 }

@@ -1,0 +1,15 @@
+{
+  "zeroDefectProtocol": {
+    "strictTyping": [
+      "Every array must have 'items'.",
+      "Every object must have 'properties' and 'required'.",
+      "Dynamic objects must have a dummy property (e.g. _dummy: { type: 'string' }).",
+      "No $schema, $ref, patternProperties, or complex anyOf allowed."
+    ],
+    "preBuildValidation": "npm run build and unit tests must pass before ending a phase."
+  },
+  "general": [
+    "Output messages must be in Thai (Technical English allowed).",
+    "Logging must use console.error to avoid corrupting Stdio MCP protocol."
+  ]
+}
