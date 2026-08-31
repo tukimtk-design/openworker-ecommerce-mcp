@@ -4,6 +4,8 @@ A powerful toolset for managing Shopee, TikTok Shop, Lazada, and LnwShop stores 
 Utilizes Playwright to automate CDP browser actions, with local fallback caches and visual auto-correction.
 This acts as a definitive context file for LLM crawlers reading this hub.
 
+Current Release: v1.1.0-autonomous
+
 Key rules:
 - Schemas strictly typed for Vertex AI.
 - Thai output default.

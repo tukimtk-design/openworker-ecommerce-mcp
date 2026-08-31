@@ -44,12 +44,18 @@
       "status": "Complete"
     },
     {
-      "name": "Phase 12",
+      "name": "Pre-Phase-12",
       "features": [
-        "Predictive Inventory",
         "AI Webboard Hub"
       ],
       "status": "In-Progress"
+    },
+    {
+      "name": "Phase 12",
+      "features": [
+        "Predictive Inventory"
+      ],
+      "status": "Proposed"
     }
   ]
 }

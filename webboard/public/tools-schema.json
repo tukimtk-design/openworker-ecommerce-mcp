@@ -10,7 +10,8 @@
             "type": "number",
             "default": 9222
           }
-        }
+        },
+        "required": []
       }
     },
     {
@@ -247,7 +248,8 @@
             },
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "required": []
           }
         },
         "required": [
@@ -265,7 +267,8 @@
             "type": "string",
             "description": "Dummy parameter to satisfy strict schema requirements"
           }
-        }
+        },
+        "required": []
       }
     },
     {
@@ -408,7 +411,8 @@
                 "type": "string"
               }
             },
-            "additionalProperties": true
+            "additionalProperties": true,
+            "required": []
           },
           "targetState": {
             "type": "object",
@@ -417,7 +421,8 @@
                 "type": "string"
               }
             },
-            "additionalProperties": true
+            "additionalProperties": true,
+            "required": []
           }
         },
         "required": [
@@ -439,7 +444,8 @@
                 "type": "string"
               }
             },
-            "additionalProperties": true
+            "additionalProperties": true,
+            "required": []
           }
         },
         "required": [
@@ -532,7 +538,8 @@
               "name": {
                 "type": "string"
               }
-            }
+            },
+            "required": []
           }
         },
         "required": [
@@ -593,7 +600,8 @@
                       "name": {
                         "type": "string"
                       }
-                    }
+                    },
+                    "required": []
                   }
                 }
               },
@@ -621,7 +629,8 @@
           "simulate": {
             "type": "boolean"
           }
-        }
+        },
+        "required": []
       }
     },
     {
@@ -763,7 +772,8 @@
                 "type": "string"
               }
             },
-            "additionalProperties": true
+            "additionalProperties": true,
+            "required": []
           }
         },
         "required": [
@@ -852,7 +862,8 @@
                 "type": "string"
               }
             },
-            "additionalProperties": true
+            "additionalProperties": true,
+            "required": []
           }
         },
         "required": [
@@ -931,7 +942,8 @@
                   "type": "string"
                 }
               }
-            }
+            },
+            "required": []
           },
           "conversionData": {
             "type": "object",
@@ -945,7 +957,8 @@
               "currencyCode": {
                 "type": "string"
               }
-            }
+            },
+            "required": []
           }
         },
         "required": [

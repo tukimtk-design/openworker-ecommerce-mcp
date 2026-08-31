@@ -7,6 +7,11 @@ export const ZeroDefectLinter = () => {
 
   const validateSchema = () => {
     try {
+      if (!jsonInput.trim()) {
+        setResult({ valid: false, messages: ["กรุณาใส่ JSON Schema"] });
+        return;
+      }
+
       const obj = JSON.parse(jsonInput);
       const msgs: string[] = [];
       let valid = true;
@@ -19,14 +24,45 @@ export const ZeroDefectLinter = () => {
           msgs.push(`[Error] Array at "${path}" is missing "items" property.`);
         }
 
-        if (node.type === 'object' && !node.properties && path !== 'root') {
+        if (node.type === 'object') {
+           if (!node.properties) {
+              valid = false;
+              msgs.push(`[Error] Object at "${path}" is missing "properties". Use _dummy property if dynamic.`);
+           } else if (Object.keys(node.properties).length === 0) {
+              // It's empty, but if it has additionalProperties, they might consider it dynamic. Vertex strictly wants properties.
+              // We'll let it slide if properties exists, but they probably need _dummy
+           }
+
+           if (!node.required) {
+              valid = false;
+              msgs.push(`[Error] Object at "${path}" is missing "required" array.`);
+           }
+
+           // Check for dynamic _dummy requirements if it has additionalProperties: true but no actual properties
+           if (node.additionalProperties === true && node.properties && !node.properties['_dummy'] && Object.keys(node.properties).length === 0) {
+              valid = false;
+              msgs.push(`[Error] Dynamic object at "${path}" is missing "_dummy" or "additionalProperties: true".`);
+           }
+        }
+
+        if (node['$schema']) {
            valid = false;
-           msgs.push(`[Error] Object at "${path}" is missing "properties". Use dummy property if dynamic.`);
+           msgs.push(`[Error] Node at "${path}" contains prohibited "$schema".`);
+        }
+
+        if (node['$ref']) {
+           valid = false;
+           msgs.push(`[Error] Node at "${path}" contains prohibited "$ref".`);
+        }
+
+        if (node.patternProperties) {
+           valid = false;
+           msgs.push(`[Error] Node at "${path}" contains prohibited "patternProperties".`);
         }
 
         if (node.anyOf || node.allOf || node.oneOf) {
-           // Not strictly banned but good to warn
-           msgs.push(`[Warning] Use of complex logic (anyOf/allOf) at "${path}" may cause issues with strict Vertex AI.`);
+           valid = false;
+           msgs.push(`[Error] Node at "${path}" contains prohibited complex nested anyOf/allOf/oneOf.`);
         }
 
         if (node.properties) {
@@ -44,7 +80,7 @@ export const ZeroDefectLinter = () => {
       if (valid && msgs.length === 0) {
         setResult({ valid: true, messages: ['Schema ผ่านเกณฑ์ Zero-Defect Protocol 100%'] });
       } else {
-        setResult({ valid, messages: msgs });
+        setResult({ valid: false, messages: msgs }); // Never claim passed if warnings/errors exist
       }
     } catch (e: any) {
       setResult({ valid: false, messages: [`Invalid JSON: ${e.message}`] });
@@ -59,7 +95,7 @@ export const ZeroDefectLinter = () => {
            Zero-Defect Linter Widget
         </h2>
         <p className="text-slate-400 mb-8">
-           วาง JSON Schema ของคุณเพื่อตรวจสอบให้แน่ใจว่าปฏิบัติตามกฎ Vertex AI Strict Typing (ห้าม Array เปล่า, ห้าม Object ไม่มี properties)
+           วาง JSON Schema ของคุณเพื่อตรวจสอบให้แน่ใจว่าปฏิบัติตามกฎ Vertex AI Strict Typing
         </p>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -78,15 +114,15 @@ export const ZeroDefectLinter = () => {
              </button>
            </div>
 
-           <div className={`p-6 rounded-xl border ${result ? (result.valid && !result.messages.some(m => m.includes('[Warning]')) ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30') : 'bg-slate-800 border-slate-700'}`}>
+           <div className={`p-6 rounded-xl border ${result ? (result.valid ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30') : 'bg-slate-800 border-slate-700'}`}>
               <h3 className="text-lg font-bold text-white mb-4">Linter Result</h3>
               {!result ? (
                  <p className="text-slate-500 text-sm">รอการตรวจสอบ...</p>
               ) : (
                  <div className="space-y-3">
                    {result.messages.map((msg, idx) => (
-                     <div key={idx} className={`flex items-start gap-2 ${msg.includes('[Error]') || msg.includes('Invalid') ? 'text-red-400' : msg.includes('[Warning]') ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                        {msg.includes('[Error]') || msg.includes('Invalid') ? <ShieldAlert size={18} className="shrink-0 mt-0.5" /> : msg.includes('[Warning]') ? <ShieldAlert size={18} className="shrink-0 mt-0.5" /> : <ShieldCheck size={18} className="shrink-0 mt-0.5" />}
+                     <div key={idx} className={`flex items-start gap-2 ${msg.includes('[Error]') || msg.includes('Invalid') ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {msg.includes('[Error]') || msg.includes('Invalid') ? <ShieldAlert size={18} className="shrink-0 mt-0.5" /> : <ShieldCheck size={18} className="shrink-0 mt-0.5" />}
                         <span className="text-sm font-mono">{msg}</span>
                      </div>
                    ))}

@@ -9,7 +9,7 @@ export const PromptDispatcher = () => {
       id: "master-context",
       title: "Master Context for AI Chat",
       description: "ก็อปปี้ Context เริ่มต้นเพื่อให้ AI Chat Controller ทราบสถานะล่าสุดของโปรเจกต์",
-      text: "ฉันคือ AI Project Controller ของ Openworker E-Commerce MCP กรุณาอัปเดตข้อมูลโครงสร้างโปรเจกต์และดึงข้อมูลจาก AI Webboard Hub (/ai-context.json) เพื่อให้แน่ใจว่าเราทำงานอยู่บน Phase 12 ล่าสุด และปฏิบัติตาม Zero-Defect Protocol อย่างเคร่งครัด"
+      text: "ฉันคือ AI Project Controller ของ Openworker E-Commerce MCP กรุณาอัปเดตข้อมูลโครงสร้างโปรเจกต์และดึงข้อมูลจาก AI Webboard Hub (/ai-context.json) เพื่อให้แน่ใจว่าเราทำงานอยู่บน Pre-Phase-12 ล่าสุด และปฏิบัติตาม Zero-Defect Protocol อย่างเคร่งครัด"
     },
     {
       id: "jules-task",

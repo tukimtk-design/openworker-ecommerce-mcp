@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, AlertTriangle } from 'lucide-react';
 
 interface Phase {
   name: string;
@@ -9,13 +9,32 @@ interface Phase {
 
 export const RoadmapTimeline = () => {
   const [phases, setPhases] = useState<Phase[]>([]);
+  const [error, setError] = useState(false);
+  const baseUrl = import.meta.env.BASE_URL;
 
   useEffect(() => {
-    fetch('/roadmap.json')
-      .then(res => res.json())
+    fetch(`${baseUrl}roadmap.json`)
+      .then(res => {
+         if (!res.ok) throw new Error('Failed to fetch');
+         return res.json();
+      })
       .then(data => setPhases(data.phases))
-      .catch(err => console.error("Failed to load roadmap", err));
-  }, []);
+      .catch(err => {
+         console.error("Failed to load roadmap", err);
+         setError(true);
+      });
+  }, [baseUrl]);
+
+  if (error) {
+     return (
+       <div className="bg-white dark:bg-slate-900 py-16 px-6 sm:px-12 lg:px-24">
+         <div className="max-w-7xl mx-auto flex items-center justify-center p-8 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl">
+           <AlertTriangle className="text-red-500 mr-3" />
+           <p className="text-red-700 dark:text-red-400 font-semibold">Failed to load roadmap.json endpoint.</p>
+         </div>
+       </div>
+     );
+  }
 
   return (
     <div className="bg-white dark:bg-slate-900 py-16 px-6 sm:px-12 lg:px-24">

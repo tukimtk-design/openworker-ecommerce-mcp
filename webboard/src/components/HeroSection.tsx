@@ -1,6 +1,7 @@
 import { Terminal, Bot, Server } from 'lucide-react';
 
 export const HeroSection = () => {
+  const baseUrl = import.meta.env.BASE_URL;
   return (
     <div className="bg-slate-900 text-white py-16 px-6 sm:px-12 lg:px-24">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
@@ -8,10 +9,10 @@ export const HeroSection = () => {
           <div className="flex items-center gap-3 mb-4">
             <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-sm font-semibold border border-emerald-500/30 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live (v1.0.0-enterprise)
+              Live (v1.1.0-autonomous)
             </span>
             <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-semibold border border-blue-500/30">
-              Phase 12: Autonomous
+              Pre-Phase-12: Webboard
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
@@ -22,15 +23,15 @@ export const HeroSection = () => {
             ศูนย์กลางการเผยแพร่ Context ของโปรเจกต์ (Single Source of Truth) เพื่อลด Human Error และ AI Hallucination รวบรวมเครื่องมือ MCP กว่า 32 ตัว กฎระเบียบ Zero-Defect Protocol และเครื่องมือช่วยเหลือ AI Developer
           </p>
           <div className="flex flex-wrap gap-4">
-            <a href="/ai-context.json" target="_blank" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">
+            <a href={`${baseUrl}ai-context.json`} target="_blank" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">
               <Terminal size={18} />
               /ai-context.json
             </a>
-            <a href="/tools-schema.json" target="_blank" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">
+            <a href={`${baseUrl}tools-schema.json`} target="_blank" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">
               <Server size={18} />
               /tools-schema.json
             </a>
-            <a href="/llms.txt" target="_blank" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">
+            <a href={`${baseUrl}llms.txt`} target="_blank" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg border border-slate-700 transition-colors">
               <Bot size={18} />
               /llms.txt
             </a>
@@ -43,7 +44,7 @@ export const HeroSection = () => {
             <div className="space-y-4">
                <div className="flex justify-between items-center border-b border-slate-700 pb-2">
                  <span className="text-slate-400">Environment</span>
-                 <span className="font-mono text-emerald-400">Production</span>
+                 <span className="font-mono text-blue-400">Pre-Deployment</span>
                </div>
                <div className="flex justify-between items-center border-b border-slate-700 pb-2">
                  <span className="text-slate-400">MCP Tools Active</span>
@@ -51,7 +52,7 @@ export const HeroSection = () => {
                </div>
                <div className="flex justify-between items-center border-b border-slate-700 pb-2">
                  <span className="text-slate-400">Strict Schema Check</span>
-                 <span className="font-mono text-emerald-400">Passed 100%</span>
+                 <span className="font-mono text-blue-400">Enabled</span>
                </div>
                <div className="flex justify-between items-center">
                  <span className="text-slate-400">Framework</span>
