@@ -107,4 +107,17 @@ export class CdpConnection {
       this.browser = null;
     }
   }
+
+  // Anti-Detection: Gaussian distributed delay for realistic human behavior
+  static async gaussianDelay(meanMs: number = 1500, stdDevMs: number = 300): Promise<void> {
+      let u = 0, v = 0;
+      while(u === 0) u = Math.random();
+      while(v === 0) v = Math.random();
+      let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      num = num / 10.0 + 0.5;
+      if (num > 1 || num < 0) num = Math.random(); 
+      num *= 2.0 * stdDevMs; 
+      const delay = Math.max(100, meanMs - stdDevMs + num);
+      return new Promise(resolve => setTimeout(resolve, delay));
+  }
 }

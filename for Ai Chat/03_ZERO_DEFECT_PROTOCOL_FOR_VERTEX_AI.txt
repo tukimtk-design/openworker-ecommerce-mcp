@@ -1,0 +1,64 @@
+================================================================================
+     🛑 ZERO-DEFECT PROTOCOL: MCP SCHEMA & VERTEX AI COMPATIBILITY
+================================================================================
+มาตรฐานข้อบังคับสูงสุดสำหรับ AI Chat (Controller) และ Google Jules (Developer)
+เป้าหมาย: ป้องกันข้อผิดพลาด HTTP 400 INVALID_ARGUMENT บน Google Vertex AI และ Claude API
+================================================================================
+
+1. กฎเหล็กการสร้าง SCHEMA (STRICT TYPING MANDATE)
+--------------------------------------------------------------------------------
+Google Vertex AI และ Claude มีตัวตรวจสอบ Function Calling Schema ที่เข้มงวดมาก หากพบ Loose Schema ระบบจะปฏิเสธการเชื่อมต่อทันที:
+
+กฎข้อที่ 1: ห้ามสร้าง Array เปล่า (Mandatory Array Items)
+- ทุกพารามิเตอร์ที่เป็น `"type": "array"` จะต้องระบุฟิลด์ `"items"` กำกับชนิดข้อมูลภายในเสมอ
+- ตัวอย่างที่ถูกต้อง:
+  ```json
+  "targetPlatforms": {
+    "type": "array",
+    "items": { "type": "string" }
+  }
+  ```
+- ตัวอย่างที่ผิด (ห้ามทำ):
+  `"targetPlatforms": { "type": "array" }`  <-- ผิดทันที
+
+กฎข้อที่ 2: ห้ามสร้าง Object ว่าง (Mandatory Object Properties)
+- ทุกพารามิเตอร์ที่เป็น `"type": "object"` จะต้องมีฟิลด์ `"properties"` เสมอ
+- หากเป็น Dynamic Object (ที่รับคีย์อะไรก็ได้) ให้ใช้เทคนิค Dummy Property ร่วมกับ `additionalProperties`:
+  ```json
+  "params": {
+    "type": "object",
+    "properties": {
+      "_dummy": { "type": "string", "description": "dummy field for vertex ai compatibility" }
+    },
+    "additionalProperties": true
+  }
+  ```
+- ตัวอย่างที่ผิด (ห้ามทำ):
+  `"params": { "type": "object" }`  <-- ผิดทันที
+
+กฎข้อที่ 3: ห้ามใช้ Unsupported Schema Keywords
+- ห้ามใช้ `$schema`, `$ref`, `patternProperties` หรือ Nested `anyOf`/`oneOf` ที่ซับซ้อน
+
+กฎข้อที่ 4: Strict Namespace Prefix
+- ทุก Tool ใหม่ต้องขึ้นต้นด้วย Prefix `ecommerce_*` เท่านั้น
+- ห้ามใช้ Prefix `browser_*`, `file_*`, `git_*`, `shell_*` หรือ `process_*` เพื่อไม่ให้ทับซ้อนกับ System Tools ของ Openworker
+
+--------------------------------------------------------------------------------
+2. ขั้นตอนการตรวจสอบก่อนอนุมัติงาน (AI CHAT REVIEW GATEWAY)
+--------------------------------------------------------------------------------
+ก่อนที่ AI Chat จะประกาศว่า Task ของ Jules เสร็จสมบูรณ์ ให้ตรวจสอบตาม Checklist 4 ข้อนี้เสมอ:
+
+[ ] Checklist 1: ตรวจสอบ Tool Definitions ใน `src/index.ts`
+    - ดูว่ามี `type: "array"` ตัวไหนที่ลืมใส่ `items` หรือไม่
+    - ดูว่ามี `type: "object"` ตัวไหนที่ลืมใส่ `properties` หรือไม่
+
+[ ] Checklist 2: ตรวจสอบผลการคอมไพล์ TypeScript
+    - Jules ต้องยืนยันว่ารัน `npm run build` (tsc) ผ่านโดยไม่มี Error
+
+[ ] Checklist 3: ตรวจสอบ Unit Test
+    - มีการรัน Unit Test หรือ Sanity Test ผ่าน 100%
+
+[ ] Checklist 4: ตรวจสอบ Error Handling ภาษาไทย
+    - มีข้อความแจ้งเตือนที่ชัดเจนเมื่อ CDP หลุด หรือต่อพอร์ต 9222 ไม่ติด พร้อมแนะนำให้เปิด Chrome ด้วย `--remote-debugging-port=9222`
+
+หาก Jules ส่งมอบงานที่ฝ่าฝืนแม้แต่ข้อเดียว ให้ AI Chat สั่งตีกลับงานและให้ Jules แก้ไขทันทีก่อนรับงาน!

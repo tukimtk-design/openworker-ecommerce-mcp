@@ -1,0 +1,524 @@
+================================================================================
+          คู่มือรายการ MCP TOOLS ทั้งหมด 32 ตัว (COMPLETE TOOLS CATALOG)
+================================================================================
+โปรเจกต์: Openworker E-Commerce MCP Server
+มาตรฐาน: Strict Typing Mandate (Zero-Defect Protocol เข้ากันได้กับ Vertex AI / Claude)
+หมายเหตุ: ทุก Tool มีการระบุ `properties`, `required`, และ `items` (สำหรับ Array) อย่างเคร่งครัด
+================================================================================
+
+หมวดที่ 1: การเชื่อมต่อเบราว์เซอร์และดึงเซสชัน (BROWSER & SESSION SUITE)
+--------------------------------------------------------------------------------
+1. browser_attach_existing
+   - คำอธิบาย: ตรวจสอบการเชื่อมต่อ Chrome/Edge บนพอร์ต 9222 และแสดงรายการ Tab ร้านค้า Shopee/TikTok/Lazada/LnwShop
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "port": { "type": "number", "default": 9222 }
+       }
+     }
+
+2. ecommerce_extract_session
+   - คำอธิบาย: ดึง Cookies, CSRF Tokens และ Authorization Headers จาก Tab ร้านค้าที่เปิดอยู่
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] }
+       },
+       "required": ["platform"]
+     }
+
+--------------------------------------------------------------------------------
+หมวดที่ 2: การจัดการสินค้าและราคาพื้นฐาน (CORE PRODUCT & SAFETY SUITE)
+--------------------------------------------------------------------------------
+3. ecommerce_product_search
+   - คำอธิบาย: ค้นหารายการสินค้าและ SKU จากระบบหลังบ้านร้านค้า
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] },
+         "query": { "type": "string" }
+       },
+       "required": ["platform", "query"]
+     }
+
+4. ecommerce_update_price_stock
+   - คำอธิบาย: ปรับเปลี่ยนราคาสินค้าและจำนวนสต็อก
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] },
+         "productId": { "type": "string" },
+         "skuId": { "type": "string" },
+         "newPrice": { "type": "number" },
+         "newStock": { "type": "number" }
+       },
+       "required": ["platform", "productId"]
+     }
+
+5. ecommerce_safety_guard
+   - คำอธิบาย: ตรวจสอบความปลอดภัยและส่วนต่างของราคาสินค้าก่อนบันทึกจริง เพื่อป้องกันราคาผิดพลาด
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "currentPrice": { "type": "number" },
+         "proposedPrice": { "type": "number" },
+         "maxPriceDropPercent": { "type": "number", "default": 50 }
+       },
+       "required": ["currentPrice", "proposedPrice"]
+     }
+
+--------------------------------------------------------------------------------
+หมวดที่ 3: ความปลอดภัยและประวัติการทำงาน (SAFETY, METRICS & AUDIT SUITE)
+--------------------------------------------------------------------------------
+6. browser_detect_challenge
+   - คำอธิบาย: สแกนหา Captcha/OTP บน Tab ที่เปิดอยู่ และส่งสัญญาณแจ้งเตือนเมื่อต้องให้มนุษย์ปลดล็อกหน้าจอ
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] }
+       },
+       "required": ["platform"]
+     }
+
+7. ecommerce_get_store_metrics
+   - คำอธิบาย: ดึงข้อมูลสรุปออเดอร์ค้างจัดส่งและรายการ SKU ที่สต็อกกำลังหมด
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] }
+       },
+       "required": ["platform"]
+     }
+
+8. ecommerce_batch_update_price_stock
+   - คำอธิบาย: อัปเดตราคาและสต็อกแบบหลายรายการพร้อมระบบชะลอความเร็ว (Throttling) ป้องกันโดนแบน
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] },
+         "items": {
+           "type": "array",
+           "items": {
+             "type": "object",
+             "properties": {
+               "productId": { "type": "string" },
+               "skuId": { "type": "string" },
+               "newPrice": { "type": "number" },
+               "newStock": { "type": "number" }
+             },
+             "required": ["productId"]
+           }
+         }
+       },
+       "required": ["platform", "items"]
+     }
+
+9. ecommerce_audit_log
+   - คำอธิบาย: บันทึกและเรียกดูประวัติการเปลี่ยนแปลงราคาสินค้าและสต็อกย้อนหลัง
+   - Schema:
+     {
+       "type": "object",
+       "properties": {
+         "action": { "type": "string", "enum": ["record", "get_history"] },
+         "productId": { "type": "string" },
+         "limit": { "type": "number", "default": 20 }
+       },
+       "required": ["action"]
+     }
+
+--------------------------------------------------------------------------------
+หมวดที่ 4: เวิร์กโฟลว์และระบบแมโคร (WORKFLOW RECIPES & SELECTORS)
+--------------------------------------------------------------------------------
+10. ecommerce_run_recipe
+    - คำอธิบาย: รัน Recipe การทำงานที่บันทึกไว้ล่วงหน้า
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "recipeId": { "type": "string" },
+          "params": {
+            "type": "object",
+            "properties": { "_dummy": { "type": "string" } },
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "required": ["recipeId"]
+      }
+
+11. ecommerce_list_recipes
+    - คำอธิบาย: แสดงรายการ Recipe ทั้งหมดที่มีในระบบ
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "_dummy": { "type": "string" }
+        }
+      }
+
+12. ecommerce_save_custom_recipe
+    - คำอธิบาย: บันทึก Macro Workflow Recipe แบบกำหนดเอง
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "recipe": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "action": { "type": "string" },
+                    "selectorKey": { "type": "string" },
+                    "selector": { "type": "string" },
+                    "value": { "type": "string" },
+                    "delayMs": { "type": "number" }
+                  },
+                  "required": ["action"]
+                }
+              }
+            },
+            "required": ["id", "name", "steps"]
+          }
+        },
+        "required": ["recipe"]
+      }
+
+13. ecommerce_cached_selector_map
+    - คำอธิบาย: จัดการฐานข้อมูล Selector ของหน้าเว็บ (Get, Set, List) พร้อมระบบ Auto-Healing
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["get", "set", "list"] },
+          "key": { "type": "string" },
+          "selectors": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["action"]
+      }
+
+--------------------------------------------------------------------------------
+หมวดที่ 5: การประหยัด Token และแคชความเร็วสูง (TOKEN OPTIMIZATION & CACHING)
+--------------------------------------------------------------------------------
+14. ecommerce_context_compressor
+    - คำอธิบาย: บีบอัด DOM HTML ให้เหลือ Micro-JSON เพื่อประหยัด Token สูงสุด
+    - Schema:
+      {
+        "type": "object",
+        "properties": { "domString": { "type": "string" } },
+        "required": ["domString"]
+      }
+
+15. ecommerce_local_sqlite_cache
+    - คำอธิบาย: อ่าน/เขียนแคชข้อมูลลงฐานข้อมูล SQLite ในเครื่อง
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["get", "set"] },
+          "key": { "type": "string" },
+          "value": { "type": "string" }
+        },
+        "required": ["action", "key"]
+      }
+
+16. ecommerce_smart_diff_update
+    - คำอธิบาย: คำนวณความแตกต่าง (Delta Diff) ระหว่าง State เดิมและเป้าหมายเพื่อส่งอัปเดตเฉพาะจุดที่เปลี่ยน
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "currentState": { "type": "object", "properties": { "_dummy": { "type": "string" } }, "additionalProperties": true },
+          "targetState": { "type": "object", "properties": { "_dummy": { "type": "string" } }, "additionalProperties": true }
+        },
+        "required": ["currentState", "targetState"]
+      }
+
+17. ecommerce_hybrid_executor
+    - คำอธิบาย: สลับการทำงานระหว่าง Direct API, CDP Browser Automation และ Human Intervention อัตโนมัติ
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "taskDetails": { "type": "object", "properties": { "_dummy": { "type": "string" } }, "additionalProperties": true }
+        },
+        "required": ["taskDetails"]
+      }
+
+18. ecommerce_token_telemetry
+    - คำอธิบาย: บันทึกและดึงสถิติการใช้/ประหยัด Token (Input, Output, Saved Tokens)
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["record", "get"] },
+          "inputTokens": { "type": "number" },
+          "outputTokens": { "type": "number" },
+          "savedTokens": { "type": "number" }
+        },
+        "required": ["action"]
+      }
+
+--------------------------------------------------------------------------------
+หมวดที่ 6: การซิงค์ข้ามแพลตฟอร์มและการวิเคราะห์ UI (CROSS-PLATFORM & VISUAL SUITE)
+--------------------------------------------------------------------------------
+19. ecommerce_match_variants
+    - คำอธิบาย: จับคู่ Variant/SKU ข้ามแพลตฟอร์มด้วยระบบ Fuzzy Matching
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["match", "force_map"] },
+          "sourceName": { "type": "string" },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "platform": { "type": "string" },
+                "productId": { "type": "string" },
+                "skuId": { "type": "string" },
+                "name": { "type": "string" }
+              },
+              "required": ["platform", "productId", "skuId", "name"]
+            }
+          },
+          "targetCandidate": {
+            "type": "object",
+            "properties": {
+              "platform": { "type": "string" },
+              "productId": { "type": "string" },
+              "skuId": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          }
+        },
+        "required": ["action", "sourceName"]
+      }
+
+20. ecommerce_sync_multiplatform_stock
+    - คำอธิบาย: ซิงค์สต็อกและราคาแบบกระจายไปยังหลายแพลตฟอร์มพร้อมกัน (Shopee, TikTok, Lazada, LnwShop)
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "sourcePlatform": { "type": "string" },
+          "sourceProductName": { "type": "string" },
+          "newStock": { "type": "number" },
+          "newPrice": { "type": "number" },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "platform": { "type": "string" },
+                "productId": { "type": "string" },
+                "currentPrice": { "type": "number" },
+                "currentStock": { "type": "number" },
+                "availableVariants": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "platform": { "type": "string" },
+                      "productId": { "type": "string" },
+                      "skuId": { "type": "string" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                }
+              },
+              "required": ["platform", "productId", "availableVariants"]
+            }
+          }
+        },
+        "required": ["sourcePlatform", "sourceProductName", "targets"]
+      }
+
+21. ecommerce_visual_dom_analysis
+    - คำอธิบาย: จับภาพ Screenshot และวิเคราะห์ Bounding Box ตำแหน่งปุ่ม เพื่อแก้ไข Selector เพี้ยนอัตโนมัติ
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "simulate": { "type": "boolean" }
+        }
+      }
+
+--------------------------------------------------------------------------------
+หมวดที่ 7: ระบบอัตโนมัติและการดูแลร้าน 24/7 (AUTONOMOUS SUITE)
+--------------------------------------------------------------------------------
+22. ecommerce_autonomous_store_manager
+    - คำอธิบาย: จัดการวงรอบการทำงานพื้นหลัง (Agent Loop) เช่น ตื่นมาตรวจแชท สต็อก และราคาตามช่วงเวลาที่กำหนด
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["start", "stop", "status", "trigger_now"] },
+          "intervalMs": { "type": "number" }
+        },
+        "required": ["action"]
+      }
+
+23. ecommerce_clone_product
+    - คำอธิบาย: โคลนสินค้าจาก URL ต้นฉบับ แปลภาษา ปรับแต่ง และโพสต์ลงร้านค้าปลายทาง
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "sourceUrl": { "type": "string" },
+          "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+          "translationTemplate": { "type": "string" }
+        },
+        "required": ["sourceUrl", "targetPlatforms"]
+      }
+
+24. ecommerce_auto_reply_chat
+    - คำอธิบาย: ดึงข้อความแชทที่ยังไม่ได้อ่านและส่งคำตอบกลับอัตโนมัติ
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "platform": { "type": "string" },
+          "action": { "type": "string", "enum": ["fetch_unread", "reply"] },
+          "messageId": { "type": "string" },
+          "replyText": { "type": "string" }
+        },
+        "required": ["platform", "action"]
+      }
+
+25. ecommerce_get_pending_orders
+    - คำอธิบาย: ดึงรายการคำสั่งซื้อที่ค้างจัดส่งจากทุกแพลตฟอร์ม
+    - Schema:
+      {
+        "type": "object",
+        "properties": { "platform": { "type": "string" } },
+        "required": ["platform"]
+      }
+
+26. ecommerce_fulfill_order
+    - คำอธิบาย: สั่งจัดเตรียมพัสดุและพิมพ์ใบปะหน้าพัสดุ
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "platform": { "type": "string" },
+          "orderId": { "type": "string" },
+          "trackingProvider": { "type": "string" }
+        },
+        "required": ["platform", "orderId"]
+      }
+
+27. ecommerce_manage_promotions
+    - คำอธิบาย: จัดการแคมเปญ Flash Sale คูปอง และโปรโมชันของร้านค้า
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "platform": { "type": "string" },
+          "action": { "type": "string", "enum": ["list", "create", "update"] },
+          "promoDetails": { "type": "object", "properties": { "_dummy": { "type": "string" } }, "additionalProperties": true }
+        },
+        "required": ["platform", "action"]
+      }
+
+28. ecommerce_sync_product_images
+    - คำอธิบาย: ซิงค์รูปภาพสินค้าและ Gallery ระหว่างแพลตฟอร์ม
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "sourcePlatform": { "type": "string" },
+          "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+          "productId": { "type": "string" }
+        },
+        "required": ["sourcePlatform", "targetPlatforms", "productId"]
+      }
+
+--------------------------------------------------------------------------------
+หมวดที่ 8: บริดจ์และการขยายผลระดับองค์กร (ENTERPRISE INTEGRATIONS)
+--------------------------------------------------------------------------------
+29. ecommerce_m365_copilot_bridge
+    - คำอธิบาย: เชื่อมต่อและสนทนากับ Microsoft 365 Copilot ผ่าน CDP เพื่อดึงข้อมูลเชิงลึกในองค์กร
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "enum": ["attach_m365_tab", "send_prompt", "read_latest_response", "get_chat_history"] },
+          "prompt": { "type": "string" }
+        },
+        "required": ["action"]
+      }
+
+30. ecommerce_seo_optimizer
+    - คำอธิบาย: วิเคราะห์และสร้าง Entity JSON-LD Schema ปรับปรุง On-page SEO ของหน้าร้านค้า
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "htmlString": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "entityType": { "type": "string", "enum": ["Product", "Organization", "Article"] },
+          "entityData": { "type": "object", "properties": { "_dummy": { "type": "string" } }, "additionalProperties": true }
+        },
+        "required": ["htmlString"]
+      }
+
+31. ecommerce_ow_lnwshop_safe_seo_updater
+    - คำอธิบาย: อัปเดต Meta Title, Keywords, Meta Description บน LnwShop อย่างปลอดภัยโดยไม่กระทบ Layout
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "platform": { "type": "string", "enum": ["lnwshop"] },
+          "productId": { "type": "string" },
+          "metaTitle": { "type": "string" },
+          "metaKeywords": { "type": "array", "items": { "type": "string" } },
+          "metaDescription": { "type": "string" }
+        },
+        "required": ["platform", "productId"]
+      }
+
+32. ecommerce_google_ads_integration
+    - คำอธิบาย: เชื่อมต่อยิงแคมเปญ Google Ads และส่งข้อมูล Offline Conversion Tracking สำหรับ LnwShop/Shopee
+    - Schema:
+      {
+        "type": "object",
+        "properties": {
+          "platform": { "type": "string", "enum": ["shopee", "tiktok", "lazada", "lnwshop"] },
+          "action": { "type": "string", "enum": ["dispatch_campaign", "track_offline_conversion"] },
+          "campaignPayload": {
+            "type": "object",
+            "properties": {
+              "campaignId": { "type": "string" },
+              "budget": { "type": "number" },
+              "targetAudience": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "conversionData": {
+            "type": "object",
+            "properties": {
+              "transactionId": { "type": "string" },
+              "conversionValue": { "type": "number" },
+              "currencyCode": { "type": "string" }
+            }
+          }
+        },
+        "required": ["platform", "action"]
+      }

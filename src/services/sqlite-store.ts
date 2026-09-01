@@ -44,30 +44,50 @@ export class SqliteStore {
     }
 
     async get(key: string): Promise<string | null> {
+        let rawVal: string | null = null;
         if (this.db) {
             try {
                 const stmt = this.db.prepare("SELECT value FROM cache WHERE key = ?");
                 const row = stmt.get(key) as { value: string } | undefined;
-                return row ? row.value : null;
+                rawVal = row ? row.value : null;
             } catch (e) {
-                return this.memoryMap.get(key) || null;
+                rawVal = this.memoryMap.get(key) || null;
+            }
+        } else {
+            rawVal = this.memoryMap.get(key) || null;
+        }
+
+        if (rawVal) {
+            try {
+                const parsed = JSON.parse(rawVal);
+                if (parsed._timestamp) {
+                    const ageMs = Date.now() - parsed._timestamp;
+                    if (ageMs > 15 * 60 * 1000) {
+                        return null; // Expired (> 15 mins)
+                    }
+                    return parsed.value;
+                }
+            } catch (e) {
+                // Not JSON wrapped, assume valid forever
+                return rawVal;
             }
         }
-        return this.memoryMap.get(key) || null;
+        return rawVal;
     }
 
     async set(key: string, value: string): Promise<void> {
+        const wrapped = JSON.stringify({ _timestamp: Date.now(), value });
         if (this.db) {
             try {
                 const stmt = this.db.prepare("INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)");
-                stmt.run(key, value);
+                stmt.run(key, wrapped);
                 return;
             } catch (e) {
-                this.memoryMap.set(key, value);
+                this.memoryMap.set(key, wrapped);
                 return;
             }
         }
-        this.memoryMap.set(key, value);
+        this.memoryMap.set(key, wrapped);
     }
 
     async close(): Promise<void> {

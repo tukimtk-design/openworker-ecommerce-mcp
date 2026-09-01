@@ -28,6 +28,15 @@ import { handleEcommerceSafetyGuard } from "./tools/safety-guard.js";
 import { SessionExtractor } from "./services/session-extractor.js";
 import { CdpConnection } from "./services/cdp-connection.js";
 import { handleBrowserAttachExisting } from "./tools/browser-profile.js";
+import { handleEcommerceMarketHunter } from "./tools/market-hunter.js";
+import { handleEcommerceDynamicPricing } from "./tools/dynamic-pricing.js";
+import { handleEcommerceCampaignParticipation } from "./tools/campaign-participation.js";
+import { handleEcommerceProfitLedger } from "./tools/profit-ledger.js";
+import { handleEcommerceAutonomyControl } from "./tools/autonomy-control.js";
+import { handleEcommerceMarketSensors } from "./tools/market-sensors.js";
+import { handleEcommerceRepricerDaemon } from "./tools/repricer-tool.js";
+import { handleEcommerceCognitionRouter } from "./tools/cognition-tool.js";
+import { handleEcommerceReviewMiner } from "./tools/review-miner-tool.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -51,6 +60,163 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      {
+        name: "ecommerce_repricer_daemon",
+        description: "Phase 14: Autonomous Repricer Daemon with margin floor & anti-oscillation safeguards",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["evaluate_and_reprice", "set_sku_rule"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            skuId: { type: "string" },
+            currentPrice: { type: "number" },
+            competitorPrice: { type: "number" },
+            strategy: { type: "string", enum: ["UNDERCUT_COMPETITOR", "MATCH_COMPETITOR", "TARGET_MARGIN"] },
+            undercutAmount: { type: "number" },
+            targetMarginPercent: { type: "number" },
+            maxUpdatesPerDay: { type: "number" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_cognition_router",
+        description: "Phase 14: Tiered Cognition Router to classify requests and minimize LLM token costs",
+        inputSchema: {
+          type: "object",
+          properties: {
+            intent: { type: "string" },
+            payload: {
+              type: "object",
+              properties: {
+                metadata: { type: "string" }
+              }
+            }
+          },
+          required: ["intent"]
+        }
+      },
+      {
+        name: "ecommerce_review_miner",
+        description: "Phase 14: Competitor Review Pain-Point Miner & Listing USP generator",
+        inputSchema: {
+          type: "object",
+          properties: {
+            reviews: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rating: { type: "number" },
+                  comment: { type: "string" }
+                },
+                required: ["rating", "comment"]
+              }
+            }
+          },
+          required: ["reviews"]
+        }
+      },
+      {
+        name: "ecommerce_market_sensors",
+        description: "Phase 13: Market Sensor Mesh - Competitor Diff, Sales Velocity Estimation, and Trend Radar",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["diff_competitor", "velocity_estimate", "trend_radar"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            skuId: { type: "string" },
+            competitorId: { type: "string" },
+            title: { type: "string" },
+            price: { type: "number" },
+            stock: { type: "number" },
+            soldCount: { type: "number" },
+            rating: { type: "number" },
+            category: { type: "string" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_profit_ledger",
+        description: "Phase 12: Profit Ledger & COGS Net Margin calculation engine with hardcoded margin floors",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["set_cogs", "compute_net_margin", "get_ledger"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            skuId: { type: "string" },
+            cogs: { type: "number" },
+            inboundShipping: { type: "number" },
+            packagingCost: { type: "number" },
+            minMarginPercent: { type: "number" },
+            proposedPrice: { type: "number" },
+            platformFeeRate: { type: "number" },
+            shippingBurden: { type: "number" },
+            adSpendPerUnit: { type: "number" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_autonomy_control",
+        description: "Phase 12: Autonomous governor, kill-switch, and dry-run mandate manager",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["get_status", "set_mandate", "kill_switch", "set_dry_run"] },
+            maxPriceChangePercent: { type: "number" },
+            dailyAdBudgetCap: { type: "number" },
+            maxSkusPerBatch: { type: "number" },
+            activate: { type: "boolean" },
+            dryRun: { type: "boolean" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_market_hunter",
+        description: "Autonomous Market Opportunity Hunter - detects arbitrage and trending viral products.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            keyword: { type: "string" },
+            minMarginPercent: { type: "number", default: 15 }
+          },
+          required: ["platform"]
+        },
+      },
+      {
+        name: "ecommerce_dynamic_margin_optimization",
+        description: "Dynamic Pricing - auto-calculates and executes margin optimization against competitors.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            rule: { type: "string" }
+          },
+          required: ["platform", "productId", "rule"]
+        },
+      },
+      {
+        name: "ecommerce_campaign_participation",
+        description: "Auto-enroll products into Flash Sales and store campaigns to maximize ROI.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            campaignId: { type: "string" },
+            products: {
+              type: "array",
+              items: { type: "string" }
+            }
+          },
+          required: ["platform", "campaignId"]
+        }
+      },
       {
         name: "browser_attach_existing",
         description: "ตรวจสอบการเชื่อมต่อ Chrome/Edge บนพอร์ต 9222 และแสดงรายการ Tab ร้านค้า Shopee/TikTok/Lazada",
@@ -108,6 +274,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             currentPrice: { type: "number" },
             proposedPrice: { type: "number" },
             maxPriceDropPercent: { type: "number", default: 50 },
+            minPriceFloor: { type: "number", default: 50 }
           },
           required: ["currentPrice", "proposedPrice"],
         },
@@ -570,6 +737,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   switch (name) {
+    case "ecommerce_repricer_daemon":
+      return await handleEcommerceRepricerDaemon(args);
+    case "ecommerce_cognition_router":
+      return await handleEcommerceCognitionRouter(args);
+    case "ecommerce_review_miner":
+      return await handleEcommerceReviewMiner(args);
+    case "ecommerce_market_sensors":
+      return await handleEcommerceMarketSensors(args);
+    case "ecommerce_profit_ledger":
+      return await handleEcommerceProfitLedger(args);
+    case "ecommerce_autonomy_control":
+      return await handleEcommerceAutonomyControl(args);
+    case "ecommerce_market_hunter":
+      return await handleEcommerceMarketHunter(args);
+    case "ecommerce_dynamic_margin_optimization":
+      return await handleEcommerceDynamicPricing(args);
+    case "ecommerce_campaign_participation":
+      return await handleEcommerceCampaignParticipation(args);
     case "browser_attach_existing":
       return await handleBrowserAttachExisting(args);
 

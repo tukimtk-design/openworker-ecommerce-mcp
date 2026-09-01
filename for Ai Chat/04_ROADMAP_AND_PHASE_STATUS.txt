@@ -1,0 +1,78 @@
+================================================================================
+          แผนพัฒนาและสถานะโปรเจกต์ (ROADMAP & PHASE STATUS)
+================================================================================
+โปรเจกต์: Openworker E-Commerce MCP Server
+สถานะปัจจุบัน: จบ Phase 11 พร้อม 32 MCP Tools (Zero-Defect Schema Verified)
+Release Tags: `v1.0.0-enterprise`, `v1.1.0-autonomous`
+================================================================================
+
+1. สรุปผลงานที่ผ่านมา (PHASE 1 ถึง PHASE 11)
+--------------------------------------------------------------------------------
+Phase 1: Core Infra & CDP Attachment
+- สร้างการเชื่อมต่อ Chrome DevTools Protocol (Port 9222)
+- Tool: `browser_attach_existing`
+
+Phase 2: Session Extraction & API Interception
+- ดึง Auth Cookies/CSRF Tokens จากหน้า Shopee, TikTok Shop, Lazada
+- Tool: `ecommerce_extract_session`
+
+Phase 3: E-Commerce Search, Update & Safety
+- ค้นหาสินค้าตาม SKU ID / Item ID
+- ปรับราคาและสต็อกโดยตรงผ่าน API
+- ระบบ Safety Guard สกัดกั้นราคาที่ลดลงฮวบฮาบ
+- Tools: `ecommerce_product_search`, `ecommerce_update_price_stock`, `ecommerce_safety_guard`
+
+Phase 4: Human-in-the-Loop, Store Metrics & Batches
+- ตรวจจับ Captcha/OTP เพื่อหยุดรอให้มนุษย์ช่วยแก้
+- ดึงสถิติร้านค้า ออเดอร์ค้าง และสินค้าใกล้หมด
+- อัปเดตราคาแบบ Batch พร้อม Anti-Rate-Limit Delay และเก็บบันทึก Audit Log
+- Tools: `browser_detect_challenge`, `ecommerce_get_store_metrics`, `ecommerce_batch_update_price_stock`, `ecommerce_audit_log`
+
+Phase 5: Smart Workflow Recipe Engine
+- รันและบันทึก Macro Recipe การทำงานของร้านค้า
+- จัดการ Cached DOM Selectors พร้อมระบบ Auto-Healing
+- Tools: `ecommerce_run_recipe`, `ecommerce_list_recipes`, `ecommerce_save_custom_recipe`, `ecommerce_cached_selector_map`
+
+Phase 6: Context Compression & Token Telemetry
+- บีบอัด DOM HTML ให้เหลือ Micro-JSON ประหยัด Token > 70%
+- แคช SQLite ความเร็วสูง และส่งอัปเดตเฉพาะจุดที่เปลี่ยน (Diff Update)
+- Tools: `ecommerce_context_compressor`, `ecommerce_local_sqlite_cache`, `ecommerce_smart_diff_update`, `ecommerce_hybrid_executor`, `ecommerce_token_telemetry`
+
+Phase 7: Production Hardening & Windows Integration
+- ระบบ Auto-Launch Chrome/Edge สำหรับ Windows
+- Playwright API Mocking และ SQLite Auto-Migration
+
+Phase 8: Multi-Platform Stock Sync & Fuzzy Variant Matcher
+- ซิงค์สต็อกสินค้าพร้อมกันข้ามแพลตฟอร์ม
+- จับคู่ชื่อ Variant สินค้าที่สะกดต่างกันด้วย Fuzzy Matching
+- Tools: `ecommerce_sync_multiplatform_stock`, `ecommerce_match_variants`
+
+Phase 9: Enterprise Cloud Deployment & Visual Self-Correction (`v1.0.0-enterprise`)
+- รองรับ Docker Headless Cloud Runner
+- วิเคราะห์ตำแหน่งปุ่มบนหน้าจอด้วย Screenshot & Bounding Box เพื่อแก้ Selector เพี้ยน
+- Tool: `ecommerce_visual_dom_analysis`
+
+Phase 10: The Autonomous Era (`v1.1.0-autonomous`)
+- ระบบ Background Agent Loop ให้ AI ทำงานดูแลร้านอัตโนมัติ 24/7
+- ตัวโคลนสินค้าข้ามแพลตฟอร์มพร้อมแปลภาษาอัตโนมัติ
+- ระบบตอบแชทลูกค้า, ดึงออเดอร์ค้าง, จัดเตรียมพัสดุ, จัดการ Flash Sale, และซิงค์รูปภาพ
+- Tools: `ecommerce_autonomous_store_manager`, `ecommerce_clone_product`, `ecommerce_auto_reply_chat`, `ecommerce_get_pending_orders`, `ecommerce_fulfill_order`, `ecommerce_manage_promotions`, `ecommerce_sync_product_images`
+
+Phase 11: Platform Expansion & Enterprise Integrations
+- รองรับแพลตฟอร์ม LnwShop / CapsuleFill อย่างสมบูรณ์
+- ระบบบริดจ์เชื่อมต่อ Microsoft 365 Copilot ผ่าน CDP
+- ระบบ On-page SEO Optimizer & Entity Schema Generator
+- ระบบ LnwShop Safe SEO Updater และ Google Ads Payload Dispatcher
+- Refactor Schema ทั้งหมด 32 Tools ให้เป็น 100% Zero-Defect Strict Schema รองรับ Google Vertex AI
+- Tools: `ecommerce_m365_copilot_bridge`, `ecommerce_seo_optimizer`, `ecommerce_ow_lnwshop_safe_seo_updater`, `ecommerce_google_ads_integration`
+
+--------------------------------------------------------------------------------
+2. ก้าวสำคัญถัดไป: PHASE 12 & AI WEBBOARD
+--------------------------------------------------------------------------------
+ภารกิจเร่งด่วน: สร้าง "AI Webboard" (Public Living Knowledge Hub)
+- สร้าง Webboard กลางสำหรับโปรเจกต์ เพื่อเป็น Single Source of Truth ให้ AI ทุกตัว (AI Chat, Jules, Openworker, Claude, Gemini) เข้าถึง Context เดียวกัน ขจัด Human Error และ Context Loss
+
+ทางเลือกฟีเจอร์สำหรับ Phase 12 (Data & Predictive Era):
+- Option A: Predictive Inventory & Smart Sourcing (พยากรณ์สินค้าหมดสต็อกล่วงหน้าและแนะนำจุดสั่งซื้อเพิ่ม Reorder Point) -> แนะนำอันดับ 1 (ROI 9.5/10)
+- Option B: Omni-Channel Competitor Radar (สแกนราคาคู่แข่งเรียลไทม์และแจ้งเตือนโปรโมชันสู้กลับ)
+- Option C: Unified Customer CRM Database (รวมประวัติลูกค้าข้ามแพลตฟอร์มเพื่อทำ Upsell/Cross-sell)

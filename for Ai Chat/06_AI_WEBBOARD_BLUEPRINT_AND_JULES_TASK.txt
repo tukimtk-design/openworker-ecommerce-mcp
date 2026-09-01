@@ -1,0 +1,94 @@
+================================================================================
+     พิมพ์เขียวและคำสั่งสั่งสร้าง AI WEBBOARD สำหรับ GOOGLE JULES
+================================================================================
+โปรเจกต์: Openworker E-Commerce MCP - AI Living Webboard & Knowledge Hub
+เป้าหมาย: สร้างกระดานเว็บกลางแบบ Publish เพื่อให้ AI ทุกตัว (AI Chat, Jules, Openworker, Claude, Gemini) และมนุษย์ เข้ามาอ่านดึง Context ล่าสุด ลดข้อผิดพลาด (Human Error & AI Hallucination)
+ผู้รับผิดชอบงานสร้าง: Google Jules (AI Developer Agent)
+ผู้อนุมัติและสั่งการ: AI Chat (Project Controller)
+================================================================================
+
+1. แนวคิดและวัตถุประสงค์ของ AI WEBBOARD (CORE CONCEPT)
+--------------------------------------------------------------------------------
+ปัญหา:
+- เมื่อต้องสลับเซสชัน AI หรือเปลี่ยนคนทำงาน ข้อมูล Context ของโปรเจกต์มักตกหล่น (Context Loss)
+- AI บางตัวเข้าถึง GitHub ไม่ได้ หรือเกิด Human Error ในการก็อปปี้สเปกเครื่องมือ
+- การตรวจสอบความเข้ากันได้ของ Tool Schema ต้องทำแบบ Manual
+
+ทางออก: "AI Webboard (Living Project Hub)"
+- เป็นเว็บไซต์กระดานกลางที่ Publish ได้ (บน GitHub Pages, Vercel, หรือ Local Web Server)
+- มีทั้งหน้าเว็บสวยงามสำหรับมนุษย์ และมี Machine-Readable JSON/Markdown Endpoints (`/ai-context.json`, `/tools.json`, `/llms.txt`) สำหรับให้ AI เข้ามาอ่านดึงข้อมูลได้ทันทีใน 1 บรรทัด
+- เป็นศูนย์กลางความจริงแห่งเดียว (Single Source of Truth) ของโปรเจกต์
+
+--------------------------------------------------------------------------------
+2. โครงสร้างและฟีเจอร์ของ AI WEBBOARD (SYSTEM BLUEPRINT)
+--------------------------------------------------------------------------------
+โครงสร้างของ AI Webboard ควรประกอบด้วย 5 โมดูลหลัก:
+
+โมดูลที่ 1: Machine-Readable AI Endpoints (หัวใจหลักสำหรับ AI เข้ามาอ่าน)
+- `/ai-context.json` : รวบรวมสรุปโปรเจกต์, สถานะ Phase ปัจจุบัน, สถาปัตยกรรม, และกฎระเบียบ
+- `/tools-schema.json` : รายการ MCP Tools ทั้งหมด (32 ตัว) พร้อม Strict JSON Schema 100%
+- `/protocols.json` : กฎเหล็ก Zero-Defect Protocol สำหรับ Vertex AI และ Claude
+- `/roadmap.json` : รายละเอียดงาน Phase 1-12 พร้อมสถานะความคืบหน้า (%)
+- `/llms.txt` : เอกสารมาตรฐานสำหรับ LLM Web Crawlers
+
+โมดูลที่ 2: Interactive MCP Tools Explorer (คลังเครื่องมือพร้อมค้นหา)
+- หน้าจอ UI แสดงรายชื่อเครื่องมือทั้งหมด 32 ตัว จัดหมวดหมู่ชัดเจน
+- สามารถกด Search/Filter ตาม Platform (Shopee, TikTok, Lazada, LnwShop)
+- แสดง Interactive Schema Viewer พร้อมปุ่ม "Copy Tool Schema" และ "Test Payload"
+
+โมดูลที่ 3: Roadmap & Phase Tracker (กระดานติดตามงาน)
+- แสดงไทม์ไลน์การพัฒนาตั้งแต่ Phase 1 ถึง Phase 12
+- ระบุสถานะ Complete / In-Progress / Proposed พร้อม Release Tags (`v1.0.0-enterprise`, `v1.1.0-autonomous`)
+
+โมดูลที่ 4: Zero-Defect Protocol & Online Schema Validator
+- แสดงกฎเกณฑ์การพัฒนาอย่างละเอียด
+- มีเครื่องมือ Online Schema Linter ให้ AI/ผู้ใช้ วาง JSON Schema เพื่อตรวจว่าผ่านกฎ Strict Typing ของ Vertex AI หรือไม่ (ตรวจ `items` ใน array, `properties` ใน object)
+
+โมดูลที่ 5: One-Click AI Prompt Dispatcher (กล่องแจก Prompt)
+- ปุ่มกด Copy Master Context สำหรับ AI Chat
+- ปุ่มกด Copy Task Prompt สำหรับ Jules
+- ปุ่มกด Copy Vertex AI `secrets.json` Configuration
+
+--------------------------------------------------------------------------------
+3. ชุดคำสั่ง PROMPT สำหรับส่งให้ GOOGLE JULES สร้าง AI WEBBOARD
+--------------------------------------------------------------------------------
+[คัดลอกข้อความในกรอบด้านล่างนี้ ส่งให้ Google Jules เริ่มต้นทำงาน]
+
+============================= START OF JULES DIRECTIVE =============================
+สวัสดี Jules! ในฐานะ AI Developer Agent ของโปรเจกต์ openworker-ecommerce-mcp
+ฉัน (AI Project Controller) ขอสั่งการให้คุณเริ่มพัฒนาโปรเจกต์ "AI Living Webboard & Knowledge Hub" เพื่อใช้เป็น Publish Hub กลางสำหรับลด Human Error และทำให้ AI ทุกตัวเข้าถึง Context เดียวกันได้ทันที
+
+🎯 ชื่องาน: Phase 12 Special Task - Build & Publish AI Webboard Hub
+📁 ตำแหน่งโฟลเดอร์: `webboard/` (หรือ `docs-site/`) พร้อม Script รันใน `package.json`
+
+📋 รายการงานที่ Jules ต้องดำเนินการ:
+
+1. สร้างโครงสร้าง Webboard (Modern Single-Page App หรือ Static Web):
+   - สามารถสร้างโดยใช้ HTML5/Tailwind/Vanilla JS หรือ Vite + React/Vue (Single Page Application ที่ Build เป็น Static HTML ได้ง่าย)
+   - ต้องสามารถ Build เป็น Static Files ลงโฟลเดอร์ `webboard/dist/` เพื่อให้พร้อม Deploy ขึ้น GitHub Pages หรือ Vercel ได้ทันที
+   - เพิ่มคำสั่งใน Root `package.json`:
+     * `"webboard:dev"` : เปิด Local Dev Server ดูหน้า Webboard
+     * `"webboard:build"` : คอมไพล์ Static Webboard
+     * `"webboard:serve"` : รัน Local Server ให้ผู้ใช้เปิดดูได้ทางเบราว์เซอร์
+
+2. สร้าง AI Machine-Readable Endpoints (ไฟล์ JSON/TXT ใน `webboard/public/` หรือ Root):
+   - `ai-context.json` : รวบรวมข้อมูลโครงการ, สถาปัตยกรรม, เวอร์ชั่นปัจจุบัน
+   - `tools-schema.json` : รวบรวม JSON Schema ของ MCP Tools ทั้งหมด 32 ตัว
+   - `protocols.json` : รายละเอียดกฎ Zero-Defect Protocol
+   - `roadmap.json` : รายการ Phase 1 ถึง 12 พร้อมสถานะ
+   - `llms.txt` : เอกสารสรุปโครงการสำหรับ LLMs
+
+3. สร้างหน้าจอ UI สวยงาม ทันสมัย รองรับ Dark Mode และ Responsive:
+   - **Hero Section**: สรุปชื่อโครงการ, Release Tags, สถานะระบบ, และปุ่ม Quick AI Access
+   - **Live MCP Tools Explorer**: หน้าจอแสดงการ์ดเครื่องมือทั้ง 32 ตัว, ฟิลเตอร์ตามหมวดหมู่, ดู Schema, ค้นหาแบบเรียลไทม์
+   - **Roadmap & Phase Timeline**: แสดงประวัติ Phase 1-11 และตัวเลือก Phase 12 (Predictive Inventory)
+   - **Zero-Defect Linter Widget**: กล่องทดสอบตรวจ JSON Schema อัตโนมัติ
+   - **One-Click Prompt Generator**: แผงกด Copy Prompt สำเร็จรูปสำหรับ AI Chat และ Jules
+
+4. ทดสอบและตรวจสอบความสมบูรณ์:
+   - ตรวจสอบว่าไฟล์ JSON ทุกไฟล์ผ่านการ Validate 100%
+   - ทดสอบรัน Build และตรวจสอบว่าไม่มี Broken Links
+   - จัดทำคู่มือการ Deploy สู่ GitHub Pages และการรันบนเครื่อง Local ไว้ใน `webboard/README.md`
+
+เริ่มดำเนินการสร้าง AI Webboard ได้ทันที และส่งรายงานสรุปกลับมายัง Controller เมื่อเสร็จสิ้นครับ!
+============================== END OF JULES DIRECTIVE ==============================

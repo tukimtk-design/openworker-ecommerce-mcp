@@ -1,3 +1,19 @@
+Endpoints and Schemas
+---------------------
+=== webboard/public/ai-context.json ===
+{
+  "projectName": "Openworker E-Commerce MCP",
+  "description": "MCP Server for Openworker to control Chrome/Edge for E-commerce platforms",
+  "currentPhase": "Phase 12",
+  "repository": "openworker-ecommerce-mcp",
+  "architecturalDecisions": [
+    "Uses HybridExecutor pattern for robust UI and API interactions.",
+    "Uses sqlite3 for local offline data caching.",
+    "Uses Playwright CDP for browser automation.",
+    "Follows Zero-Defect Protocol for Tool Schemas (Vertex AI/Claude compatibility)."
+  ]
+}
+=== webboard/public/tools-schema.json ===
 {
   "tools": [
     {
@@ -956,3 +972,133 @@
     }
   ]
 }
+=== webboard/public/protocols.json ===
+{
+  "zeroDefectProtocol": {
+    "strictTyping": [
+      "Every array must have 'items'.",
+      "Every object must have 'properties' and 'required'.",
+      "Dynamic objects must have a dummy property (e.g. _dummy: { type: 'string' }).",
+      "No $schema, $ref, patternProperties, or complex anyOf allowed."
+    ],
+    "preBuildValidation": "npm run build and unit tests must pass before ending a phase."
+  },
+  "general": [
+    "Output messages must be in Thai (Technical English allowed).",
+    "Logging must use console.error to avoid corrupting Stdio MCP protocol."
+  ]
+}
+=== webboard/public/roadmap.json ===
+{
+  "phases": [
+    {
+      "name": "Phase 7",
+      "features": [
+        "Auto-Launch on Windows",
+        "Playwright E2E Mocks",
+        "Openworker Auto-Installer"
+      ],
+      "status": "Complete"
+    },
+    {
+      "name": "Phase 8",
+      "features": [
+        "Multi-Platform Stock Sync",
+        "Fuzzy Variant Matching"
+      ],
+      "status": "Complete"
+    },
+    {
+      "name": "Phase 9",
+      "features": [
+        "Docker & Headless Run",
+        "Visual DOM Self-Correction",
+        "Proxy Rotation"
+      ],
+      "status": "Complete"
+    },
+    {
+      "name": "Phase 10",
+      "features": [
+        "Autonomous AI Store Manager",
+        "Omni-Channel Product Cloner",
+        "E-Commerce Expansion Suite"
+      ],
+      "status": "Complete"
+    },
+    {
+      "name": "Phase 11",
+      "features": [
+        "LnwShop Integration",
+        "Microsoft 365 Copilot Bridge"
+      ],
+      "status": "Complete"
+    },
+    {
+      "name": "Phase 12",
+      "features": [
+        "Predictive Inventory",
+        "AI Webboard Hub"
+      ],
+      "status": "In-Progress"
+    }
+  ]
+}
+=== webboard/public/llms.txt ===
+Openworker E-Commerce MCP Project
+
+A powerful toolset for managing Shopee, TikTok Shop, Lazada, and LnwShop stores via AI Agents.
+Utilizes Playwright to automate CDP browser actions, with local fallback caches and visual auto-correction.
+This acts as a definitive context file for LLM crawlers reading this hub.
+
+Key rules:
+- Schemas strictly typed for Vertex AI.
+- Thai output default.
+- stdio log streaming using console.error only.
+
+=== Tool Name Validation & Counting ===
+Exact number of tool entries: 32
+- browser_attach_existing (SOURCE-DERIVED)
+- ecommerce_extract_session (SOURCE-DERIVED)
+- ecommerce_product_search (SOURCE-DERIVED)
+- ecommerce_update_price_stock (SOURCE-DERIVED)
+- ecommerce_safety_guard (SOURCE-DERIVED)
+- browser_detect_challenge (SOURCE-DERIVED)
+- ecommerce_get_store_metrics (SOURCE-DERIVED)
+- ecommerce_batch_update_price_stock (SOURCE-DERIVED)
+- ecommerce_audit_log (SOURCE-DERIVED)
+- ecommerce_run_recipe (SOURCE-DERIVED)
+- ecommerce_list_recipes (SOURCE-DERIVED)
+- ecommerce_save_custom_recipe (SOURCE-DERIVED)
+- ecommerce_cached_selector_map (SOURCE-DERIVED)
+- ecommerce_context_compressor (SOURCE-DERIVED)
+- ecommerce_local_sqlite_cache (SOURCE-DERIVED)
+- ecommerce_smart_diff_update (SOURCE-DERIVED)
+- ecommerce_hybrid_executor (SOURCE-DERIVED)
+- ecommerce_token_telemetry (SOURCE-DERIVED)
+- ecommerce_match_variants (SOURCE-DERIVED)
+- ecommerce_sync_multiplatform_stock (SOURCE-DERIVED)
+- ecommerce_visual_dom_analysis (SOURCE-DERIVED)
+- ecommerce_autonomous_store_manager (SOURCE-DERIVED)
+- ecommerce_clone_product (SOURCE-DERIVED)
+- ecommerce_auto_reply_chat (SOURCE-DERIVED)
+- ecommerce_get_pending_orders (SOURCE-DERIVED)
+- ecommerce_fulfill_order (SOURCE-DERIVED)
+- ecommerce_manage_promotions (SOURCE-DERIVED)
+- ecommerce_sync_product_images (SOURCE-DERIVED)
+- ecommerce_m365_copilot_bridge (SOURCE-DERIVED)
+- ecommerce_seo_optimizer (SOURCE-DERIVED)
+- ecommerce_ow_lnwshop_safe_seo_updater (SOURCE-DERIVED)
+- ecommerce_google_ads_integration (SOURCE-DERIVED)
+
+--- Zero Defect Checks ---
+WARNING: Tool does not start with ecommerce_: browser_attach_existing
+WARNING: Tool does not start with ecommerce_: browser_detect_challenge
+Zero Defect Validation Passed
+
+=== Dist Folder Presence ===
+-rw-rw-r-- 1 jules jules   511 Aug 31 11:15 ai-context.json
+-rw-rw-r-- 1 jules jules   435 Aug 31 11:15 llms.txt
+-rw-rw-r-- 1 jules jules   576 Aug 31 11:15 protocols.json
+-rw-rw-r-- 1 jules jules  1101 Aug 31 11:15 roadmap.json
+-rw-rw-r-- 1 jules jules 23754 Aug 31 11:15 tools-schema.json

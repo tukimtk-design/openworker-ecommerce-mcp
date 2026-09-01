@@ -1,0 +1,100 @@
+================================================================================
+          ภาพรวมโปรเจกต์และสถาปัตยกรรมระบบ (PROJECT ARCHITECTURE)
+================================================================================
+ชื่อโปรเจกต์: Openworker E-Commerce MCP Server
+GitHub Repo: https://github.com/tukimtk-design/openworker-ecommerce-mcp
+ภาษาหลัก: TypeScript (Node.js ES Modules)
+โปรโตคอล: Model Context Protocol (MCP) โดย Anthropic / Openworker Standard
+เป้าหมาย: ควบคุมเบราว์เซอร์ Chrome/Edge อัตโนมัติ เพื่อบริหารจัดการร้านค้า E-Commerce (Shopee, TikTok Shop, Lazada, LnwShop) ด้วยความเร็ว ความปลอดภัย และประหยัด Token สูงสุด
+================================================================================
+
+1. ปัญหาและที่มาของโครงการ (PROBLEM STATEMENT & SOLUTION)
+--------------------------------------------------------------------------------
+ปัญหาของบอท E-Commerce ทั่วไป:
+1.1 โดนบล็อคจากระบบล็อกอิน / เจอด่าน 2FA/OTP ซ้ำซาก:
+    บอททั่วไปพยายามเปิดเบราว์เซอร์ใหม่ (Clean Profile) ทำให้ต้องล็อกอินใหม่ทุกครั้งและติดด่านความปลอดภัย
+1.2 ทำงานช้าและเปลือง Token:
+    การสั่งคลิก UI ทีละจุดผ่าน DOM Selector กินเวลาและทำให้ LLM ต้องประมวลผล HTML ขนาดใหญ่
+1.3 เสี่ยงต่อการตั้งราคาผิดพลาด (Fat-finger error):
+    บอททั่วไปไม่มีระบบตรวจจับความผิดปกติของราคา หาก AI คำนวณราคาผิด อาจทำให้ร้านค้าขาดทุนมหาศาล
+
+โซลูชันของ Openworker E-Commerce MCP:
+1. Connect ผ่าน Session จริง (CDP Port 9222):
+   - เชื่อมต่อเบราว์เซอร์ Chrome หรือ Edge ที่ผู้ใช้ล็อกอิน Seller Center ค้างไว้อยู่แล้วผ่าน Chrome DevTools Protocol (CDP)
+   - ไม่ต้องส่ง Username/Password ในโค้ด และไม่ต้องล็อกอินใหม่
+2. อัปเดตรวดเร็วด้วย Internal API Interception:
+   - ดึง Auth Cookies, CSRF Tokens, และ Headers จากหน้าเว็บที่เปิดอยู่ แล้วส่งคำสั่งอัปเดตผ่าน API ภายในของแพลตฟอร์มโดยตรง
+   - ทำงานได้ในระดับมิลลิวินาที แม่นยำ ไม่ต้องพึ่งพา DOM Selector เพียงอย่างเดียว
+3. Safety Guard & Captcha Pause (Human-in-the-loop):
+   - มีระบบ Safety Guard คอยสกัดกั้นการลดราคาที่เกินขอบเขต (เช่น ลดเกิน 50%)
+   - สแกนหา Captcha/OTP และหยุดรอส่งสัญญาณแจ้งเตือนมนุษย์ให้เข้ามาช่วยปลดล็อกหน้าจอ
+4. Token Telemetry & Context Compression:
+   - บีบอัด DOM ให้เหลือ Micro-JSON เพื่อประหยัด Token ในการส่งให้ LLM ได้มากกว่า 70-80%
+   - บันทึกและวิเคราะห์การใช้ Token (Input/Output/Saved Tokens)
+
+--------------------------------------------------------------------------------
+2. สถาปัตยกรรมระบบ (SYSTEM ARCHITECTURE)
+--------------------------------------------------------------------------------
+
++-------------------------------------------------------------------------+
+|                           OPENWORKER CLIENT                             |
+|               (LLM Agent: Vertex AI / Gemini / Claude)                  |
++-------------------------------------------------------------------------+
+                                    |
+                          MCP Protocol (Stdio)
+                                    v
++-------------------------------------------------------------------------+
+|                  OPENWORKER-ECOMMERCE-MCP SERVER                        |
+|                                                                         |
+|  [Core Services]                                                        |
+|  ├── CdpConnection       : จัดการ WebSocket/HTTP CDP พอร์ต 9222         |
+|  ├── SessionExtractor    : สกัด Cookies, Tokens, Headers จากแท็บร้านค้า  |
+|  ├── ApiClient           : ยิงคำสั่ง API ตรงไปยัง Shopee/TikTok/Lazada   |
+|  └── LocalSqliteCache    : แคชข้อมูล, Audit Logs, Selectors             |
+|                                                                         |
+|  [Feature Suites]                                                       |
+|  ├── Safety Guard & Challenge Detector (Human-in-the-Loop)              |
+|  ├── Multiplatform Stock Sync & Fuzzy Variant Matcher                   |
+|  ├── Visual DOM Analysis & Auto-Healing Selector Engine                 |
+|  ├── Autonomous Store Manager (Background Agent Loop)                   |
+|  ├── Omni-Channel Cloner, Chat Auto-Reply & Order Fulfillment           |
+|  └── M365 Copilot Bridge, SEO Optimizer, Google Ads Dispatcher          |
++-------------------------------------------------------------------------+
+                                    |
+                           CDP Port 9222 (WebSocket)
+                                    v
++-------------------------------------------------------------------------+
+|                     USER'S CHROME / EDGE BROWSER                        |
+|                                                                         |
+|   [Tab 1] Shopee Seller Centre (https://seller.shopee.co.th)           |
+|   [Tab 2] TikTok Shop Seller Center (https://seller-th.tiktok.com)      |
+|   [Tab 3] Lazada Seller Center (https://sellercenter.lazada.co.th)      |
+|   [Tab 4] LnwShop / CapsuleFill Management Portal                       |
++-------------------------------------------------------------------------+
+
+--------------------------------------------------------------------------------
+3. แพลตฟอร์มที่รองรับ (SUPPORTED PLATFORMS)
+--------------------------------------------------------------------------------
+1. Shopee (Seller Centre TH)
+2. TikTok Shop (Seller Center TH)
+3. Lazada (Seller Center TH)
+4. LnwShop / CapsuleFill (PHP Session & E-Commerce Web Portal)
+
+--------------------------------------------------------------------------------
+4. การตั้งค่า GOOGLE VERTEX AI สำหรับ OPENWORKER
+--------------------------------------------------------------------------------
+ไฟล์ Configuration ของ Openworker อยู่ที่:
+- Windows: `C:\Users\%USERNAME%\AppData\Roaming\coworker\secrets.json`
+
+การตั้งค่าที่ถูกต้องสำหรับ Vertex AI:
+```json
+{
+  "providers": {
+    "vertex": {
+      "project": "your-gcp-project-id",
+      "location": "global"
+    }
+  }
+}
+```
+* หมายเหตุสำคัญ: หากตั้งค่าเป็น `us-east5` หรือภูมิภาคเฉพาะ แล้วพบปัญหา ใช้งานไม่ได้ ให้เปลี่ยนกลับเป็น `location: "global"` เสมอ เนื่องจาก global จะทำ Multi-region Routing ไปยังโหนดที่พร้อมให้บริการโดยอัตโนมัติ

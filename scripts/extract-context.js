@@ -12,6 +12,7 @@ if (!fs.existsSync(webboardPublicDir)) {
   fs.mkdirSync(webboardPublicDir, { recursive: true });
 }
 
+// 1. ai-context.json
 fs.writeFileSync(
   path.join(webboardPublicDir, "ai-context.json"),
   JSON.stringify(
@@ -29,9 +30,10 @@ fs.writeFileSync(
     },
     null,
     2
-  )
+  ) + "\n"
 );
 
+// 2. protocols.json
 fs.writeFileSync(
   path.join(webboardPublicDir, "protocols.json"),
   JSON.stringify(
@@ -52,9 +54,10 @@ fs.writeFileSync(
     },
     null,
     2
-  )
+  ) + "\n"
 );
 
+// 3. roadmap.json
 fs.writeFileSync(
   path.join(webboardPublicDir, "roadmap.json"),
   JSON.stringify(
@@ -71,9 +74,10 @@ fs.writeFileSync(
     },
     null,
     2
-  )
+  ) + "\n"
 );
 
+// 4. llms.txt
 fs.writeFileSync(
   path.join(webboardPublicDir, "llms.txt"),
   `Openworker E-Commerce MCP Project
@@ -91,13 +95,24 @@ Key rules:
 `
 );
 
-const indexContent = fs.readFileSync(path.join(rootDir, "src", "index.ts"), "utf8");
+// 5. tools-schema.json (Extracted canonically from src/index.ts AST without semantic mutation)
+const indexFilePath = path.join(rootDir, "src", "index.ts");
+if (!fs.existsSync(indexFilePath)) {
+  console.error(`[AST Extraction Error] Cannot find src/index.ts at ${indexFilePath}`);
+  process.exit(1);
+}
+
+const indexContent = fs.readFileSync(indexFilePath, "utf8");
 const sourceFile = ts.createSourceFile("index.ts", indexContent, ts.ScriptTarget.Latest, true);
 
 let toolsArrayNode = null;
 
 function visit(node) {
-  if (ts.isPropertyAssignment(node) && node.name.text === "tools" && ts.isArrayLiteralExpression(node.initializer)) {
+  if (
+    ts.isPropertyAssignment(node) &&
+    (node.name.text === "tools" || node.name.escapedText === "tools") &&
+    ts.isArrayLiteralExpression(node.initializer)
+  ) {
     toolsArrayNode = node.initializer;
   }
   ts.forEachChild(node, visit);
@@ -106,87 +121,125 @@ function visit(node) {
 visit(sourceFile);
 
 if (!toolsArrayNode) {
-  console.error("Failed to find tools array in AST.");
+  console.error("[AST Extraction Error] Failed to find tools array in src/index.ts AST.");
   process.exit(1);
 }
 
-function astToObject(node) {
+function astToObject(node, currentToolName = "<unknown>", currentPath = "root") {
+  if (!node) return undefined;
+
   if (ts.isObjectLiteralExpression(node)) {
     const obj = {};
     for (const prop of node.properties) {
       if (ts.isPropertyAssignment(prop)) {
-        const key = prop.name.text || prop.name.escapedText;
-        obj[key] = astToObject(prop.initializer);
+        const key = prop.name.text || prop.name.escapedText || prop.name.getText();
+        obj[key] = astToObject(prop.initializer, currentToolName, `${currentPath}.${key}`);
+      } else if (ts.isShorthandPropertyAssignment(prop)) {
+        const key = prop.name.text || prop.name.escapedText || prop.name.getText();
+        obj[key] = prop.name.text;
+      } else {
+        const kindName = ts.SyntaxKind[prop.kind] || String(prop.kind);
+        console.error(
+          `[AST Extraction Error] Unsupported property kind '${kindName}' at Tool: '${currentToolName}', Path: '${currentPath}'`
+        );
+        process.exit(1);
       }
     }
     return obj;
-  } else if (ts.isArrayLiteralExpression(node)) {
-    return node.elements.map(astToObject);
-  } else if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+  }
+
+  if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.map((elem, idx) =>
+      astToObject(elem, currentToolName, `${currentPath}[${idx}]`)
+    );
+  }
+
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
     return node.text;
-  } else if (ts.isNumericLiteral(node)) {
+  }
+
+  if (ts.isNumericLiteral(node)) {
     return Number(node.text);
-  } else if (node.kind === ts.SyntaxKind.TrueKeyword) {
+  }
+
+  if (ts.isPrefixUnaryExpression(node)) {
+    if (node.operator === ts.SyntaxKind.MinusToken && ts.isNumericLiteral(node.operand)) {
+      return -Number(node.operand.text);
+    }
+    if (node.operator === ts.SyntaxKind.PlusToken && ts.isNumericLiteral(node.operand)) {
+      return Number(node.operand.text);
+    }
+  }
+
+  if (node.kind === ts.SyntaxKind.TrueKeyword) {
     return true;
-  } else if (node.kind === ts.SyntaxKind.FalseKeyword) {
+  }
+
+  if (node.kind === ts.SyntaxKind.FalseKeyword) {
     return false;
-  } else if (node.kind === ts.SyntaxKind.NullKeyword) {
+  }
+
+  if (node.kind === ts.SyntaxKind.NullKeyword) {
     return null;
   }
-  return undefined;
+
+  if (ts.isIdentifier(node)) {
+    if (node.text === "undefined") {
+      return undefined;
+    }
+  }
+
+  const kindName = ts.SyntaxKind[node.kind] || String(node.kind);
+  console.error(
+    `[AST Extraction Error] Unsupported AST node kind '${kindName}' (${node.kind}) at Tool: '${currentToolName}', Path: '${currentPath}'`
+  );
+  process.exit(1);
 }
 
-const rawTools = toolsArrayNode.elements.map(astToObject).filter(t => t && t.name);
-
-// Filter out openworker-ecommerce-mcp info tool if it exists to make exactly 32 canonical action tools.
-// Or wait, looking at `src/index.ts`, the first tool is `openworker-ecommerce-mcp` describing the server itself.
-// We should probably filter it out to meet exactly 32.
-const tools = rawTools.filter(t => t.name.startsWith("ecommerce_") || t.name.startsWith("browser_"));
-
-function fixSchema(node) {
-  if (!node || typeof node !== "object") return;
-
-  if (node.type === "object") {
-    if (!node.properties) {
-       node.properties = { _dummy: { type: "string" } };
-       node.additionalProperties = true;
-    }
-    if (!node.required) {
-      node.required = [];
-    }
-    for (const key in node.properties) {
-       fixSchema(node.properties[key]);
-    }
-  } else if (node.type === "array") {
-    if (!node.items) {
-       node.items = { type: "string" };
-    }
-    fixSchema(node.items);
+const tools = toolsArrayNode.elements.map((toolElem, idx) => {
+  if (!ts.isObjectLiteralExpression(toolElem)) {
+    console.error(`[AST Extraction Error] Expected ObjectLiteralExpression in tools array at index ${idx}`);
+    process.exit(1);
   }
-}
 
-tools.forEach(t => {
-  if (t.inputSchema) {
-     fixSchema(t.inputSchema);
-  } else {
-     t.inputSchema = { type: "object", properties: { _dummy: { type: "string" } }, additionalProperties: true, required: [] };
+  let toolName = `<tool_${idx}>`;
+  for (const prop of toolElem.properties) {
+    if (ts.isPropertyAssignment(prop)) {
+      const key = prop.name.text || prop.name.escapedText || prop.name.getText();
+      if (
+        key === "name" &&
+        (ts.isStringLiteral(prop.initializer) || ts.isNoSubstitutionTemplateLiteral(prop.initializer))
+      ) {
+        toolName = prop.initializer.text;
+        break;
+      }
+    }
   }
+
+  return astToObject(toolElem, toolName, toolName);
 });
 
-const uniqueNames = new Set(tools.map(t => t.name));
-if (uniqueNames.size !== tools.length) {
-   console.error("Duplicate tools found during extraction.");
-   process.exit(1);
+if (tools.length !== 32) {
+  console.error(`[AST Extraction Error] Expected exactly 32 canonical tools, found ${tools.length}`);
+  process.exit(1);
 }
 
-if (tools.length !== 32) {
-   console.error(`Expected exactly 32 tools, found ${tools.length}`);
-   process.exit(1);
+const seenNames = new Set();
+for (const tool of tools) {
+  if (!tool.name) {
+    console.error(`[AST Extraction Error] Found tool without a name: ${JSON.stringify(tool)}`);
+    process.exit(1);
+  }
+  if (seenNames.has(tool.name)) {
+    console.error(`[AST Extraction Error] Duplicate tool name detected: '${tool.name}'`);
+    process.exit(1);
+  }
+  seenNames.add(tool.name);
 }
 
 fs.writeFileSync(
   path.join(webboardPublicDir, "tools-schema.json"),
-  JSON.stringify({ tools }, null, 2)
+  JSON.stringify({ tools }, null, 2) + "\n"
 );
 
-console.log("Successfully extracted 32 canonical tools using AST parsing.");
+console.log(`Successfully extracted ${tools.length} canonical tools using safe AST parsing without mutation.`);
