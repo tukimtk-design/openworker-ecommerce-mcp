@@ -152,3 +152,23 @@ Added native support for LnwShop, capsulefill.com, and lnw.co domains. Stock and
 
 ### Microsoft 365 Copilot Bridge
 Introduced `ecommerce_m365_copilot_bridge` to natively interact with the `m365.cloud.microsoft/chat` interface, allowing autonomous agents to offload complex reasoning or formatting tasks securely.
+
+---
+
+## 🚀 Phase 12 Features (The Predictive Era)
+
+### Predictive Inventory & Smart Sourcing
+New tool `ecommerce_predictive_inventory` — forecast stock depletion from sales history:
+- **Action `forecast`**: weighted sales velocity, daily trend (linear regression), predicted stockout date, Reorder Point (lead-time demand + safety stock at service level 0.90–0.99), suggested reorder quantity, and risk level (`critical`/`warning`/`healthy`) with Thai-language recommendations.
+- **Action `bulk_forecast`**: forecast many products at once, sorted by urgency — ready for a daily agent watchlist.
+
+```json
+{ "action": "forecast", "productId": "P123", "currentStock": 50, "leadTimeDays": 7,
+  "salesHistory": [{ "date": "2026-09-01", "unitsSold": 12 }] }
+```
+
+### Test & Storage Hardening
+- Tests are now **hermetic**: `npm test` runs against a throwaway SQLite DB (`scripts/run-tests.mjs`) and never touches your real `%APPDATA%` store.
+- `SqliteStore` supports `OPENWORKER_DB_PATH` / `OPENWORKER_DATA_DIR` env overrides and transparently reads legacy pre-refactor data.
+- Debug tool: `node scripts/inspect-db.mjs` to inspect the cache DB.
+- Roadmap for the next phases: see [docs/ROADMAP.md](docs/ROADMAP.md).

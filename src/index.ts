@@ -2,6 +2,7 @@ import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
+import { handleEcommercePredictiveInventory } from "./tools/predictive-inventory.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -560,6 +561,58 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "action"]
         }
+      },
+      {
+        name: "ecommerce_predictive_inventory",
+        description: "พยากรณ์สต็อกล่วงหน้าจากประวัติยอดขาย: คำนวณความเร็วขาย, วันที่สินค้าหมด, จุดสั่งซื้อ (Reorder Point) และจำนวนที่ควรสั่งซื้อเพิ่ม พร้อมลิสต์เรียงตามความเร่งด่วน (Smart Sourcing)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["forecast", "bulk_forecast"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            currentStock: { type: "number" },
+            leadTimeDays: { type: "number", default: 7 },
+            targetCoverDays: { type: "number", default: 30 },
+            serviceLevel: { type: "number", enum: [0.9, 0.95, 0.98, 0.99], default: 0.95 },
+            today: { type: "string", description: "ISO date (YYYY-MM-DD) override for deterministic forecasts" },
+            salesHistory: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  date: { type: "string", description: "YYYY-MM-DD" },
+                  unitsSold: { type: "number" }
+                },
+                required: ["date", "unitsSold"]
+              }
+            },
+            products: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+                  productId: { type: "string" },
+                  currentStock: { type: "number" },
+                  salesHistory: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        date: { type: "string", description: "YYYY-MM-DD" },
+                        unitsSold: { type: "number" }
+                      },
+                      required: ["date", "unitsSold"]
+                    }
+                  }
+                },
+                required: ["productId", "currentStock", "salesHistory"]
+              }
+            }
+          },
+          required: ["action"]
+        }
       }
     ],
   };
@@ -675,6 +728,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceOwLnwshopSafeSeoUpdater(args);
     case "ecommerce_google_ads_integration":
       return await handleEcommerceGoogleAdsIntegration(args);
+    case "ecommerce_predictive_inventory":
+      return await handleEcommercePredictiveInventory(args);
     default:
       return {
         content: [

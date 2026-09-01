@@ -10,7 +10,8 @@ export async function handleEcommerceCachedSelectorMap(args: any) {
     const action = args?.action;
 
 
-    let selectorCache: Record<string, string[]> = defaultCache;
+    // Clone so "set" never mutates the module-level defaults when the DB is unavailable.
+    let selectorCache: Record<string, string[]> = { ...defaultCache };
     const stored = await store.get("selector_cache_list");
     if (stored) {
         selectorCache = JSON.parse(stored);
