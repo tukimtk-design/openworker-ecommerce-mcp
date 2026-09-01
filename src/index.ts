@@ -37,6 +37,9 @@ import { handleEcommerceMarketSensors } from "./tools/market-sensors.js";
 import { handleEcommerceRepricerDaemon } from "./tools/repricer-tool.js";
 import { handleEcommerceCognitionRouter } from "./tools/cognition-tool.js";
 import { handleEcommerceReviewMiner } from "./tools/review-miner-tool.js";
+import { handleEcommerceActuatorRouter } from "./tools/actuator-tool.js";
+import { handleEcommerceSupplierBridge } from "./tools/supplier-tool.js";
+import { handleEcommerceListingAbTest } from "./tools/ab-test-tool.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -727,6 +730,94 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["platform", "action"]
         }
+      },
+      {
+        name: "ecommerce_actuator_router",
+        description: "Hybrid API Actuator Router for switching between Official Open API, Internal Session XHR, and Headless CDP fallback with circuit breaker",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: { type: "string", enum: ["SHOPEE", "TIKTOK_SHOP", "LAZADA", "LNWSHOP"] },
+            action: { type: "string", enum: ["UPDATE_PRICE", "UPDATE_STOCK", "PUBLISH_PRODUCT", "FETCH_ORDERS"] },
+            payload: {
+              type: "object",
+              properties: {
+                hasApiKey: { type: "boolean" },
+                price: { type: "number" },
+                stock: { type: "number" },
+                sku: { type: "string" }
+              }
+            },
+            availableChannels: {
+              type: "array",
+              items: { type: "string", enum: ["OFFICIAL_OPEN_API", "INTERNAL_XHR_SESSION", "HEADLESS_CDP_FALLBACK"] }
+            },
+            dryRun: { type: "boolean" }
+          },
+          required: ["platform", "action"]
+        }
+      },
+      {
+        name: "ecommerce_supplier_bridge",
+        description: "Cross-Border Supplier Arbitrage Bridge for 1688, Taobao, and AliExpress with landed cost calculations and margin ranking",
+        inputSchema: {
+          type: "object",
+          properties: {
+            domesticSku: { type: "string" },
+            domesticTitle: { type: "string" },
+            domesticSellingPrice: { type: "number" },
+            targetNetMarginPercent: { type: "number" },
+            suppliers: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  supplierPlatform: { type: "string", enum: ["1688", "TAOBAO", "ALIEXPRESS"] },
+                  supplierProductId: { type: "string" },
+                  supplierTitle: { type: "string" },
+                  sourceCurrency: { type: "string", enum: ["CNY", "USD"] },
+                  sourcePrice: { type: "number" },
+                  estimatedFreightThb: { type: "number" },
+                  importTaxRate: { type: "number" },
+                  cnyToThbRate: { type: "number" },
+                  moq: { type: "number" },
+                  supplierRating: { type: "number" }
+                },
+                required: ["supplierPlatform", "supplierProductId", "sourcePrice", "sourceCurrency"]
+              }
+            }
+          },
+          required: ["domesticSku", "domesticSellingPrice", "suppliers"]
+        }
+      },
+      {
+        name: "ecommerce_listing_ab_test",
+        description: "Automated Listing A/B Testing Engine for titles and cover images with Revenue Per Impression (RPI) attribution",
+        inputSchema: {
+          type: "object",
+          properties: {
+            experimentId: { type: "string" },
+            productId: { type: "string" },
+            minImpressionsPerVariant: { type: "number" },
+            variants: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  variantId: { type: "string" },
+                  title: { type: "string" },
+                  coverImageUrl: { type: "string" },
+                  impressions: { type: "number" },
+                  clicks: { type: "number" },
+                  orders: { type: "number" },
+                  revenueThb: { type: "number" }
+                },
+                required: ["variantId", "title", "impressions", "clicks", "orders", "revenueThb"]
+              }
+            }
+          },
+          required: ["experimentId", "productId", "variants"]
+        }
       }
     ],
   };
@@ -737,6 +828,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   switch (name) {
+    case "ecommerce_actuator_router":
+      return await handleEcommerceActuatorRouter(args);
+    case "ecommerce_supplier_bridge":
+      return await handleEcommerceSupplierBridge(args);
+    case "ecommerce_listing_ab_test":
+      return await handleEcommerceListingAbTest(args);
     case "ecommerce_repricer_daemon":
       return await handleEcommerceRepricerDaemon(args);
     case "ecommerce_cognition_router":
