@@ -190,3 +190,18 @@ New tool `ecommerce_reorder_workflow` — turn critical forecasts into Purchase 
 New tool `ecommerce_send_notification` — LINE Messaging API or Telegram Bot alerts. Without tokens it dry-runs (`simulated`), so automation is safe in sandboxes. Set `LINE_CHANNEL_ACCESS_TOKEN`/`LINE_TARGET_ID` or `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` to go live.
 
 Phase 13 details: [docs/REPORT_PHASE_13.md](docs/REPORT_PHASE_13.md)
+
+---
+
+## 🚀 Phase 14 Features (Competitor Radar)
+
+### Rate-Limited Competitor Scanning
+New tool `ecommerce_competitor_radar` — action `scan` respects a token-bucket rate cap (1–30/min, default 6) with randomized jitter, storing every result as a timestamped snapshot. The extractor is pluggable (built-in mock; swap in a real CDP/API extractor in Phase 15).
+
+### Competitor Time-Series + Retention
+Snapshots are stored as a time series (`competitor_history:{platform}:{skuId}`) capped at 500 points per SKU, with a `prune_history` action (default 90-day retention).
+
+### Price-War Playbook
+Action `price_war_playbook` compares your price against the competitor's latest and returns three margin-aware response plans — match the price, offer a voucher/bundle at ~half the gap, or hold — never recommending anything below your margin floor (from the COGS cache key `cogs:{platform}:{productId}:{skuId}` or a direct `unitCost`).
+
+Phase 14 details: [docs/REPORT_PHASE_14.md](docs/REPORT_PHASE_14.md)

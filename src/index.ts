@@ -5,6 +5,7 @@ import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integrat
 import { handleEcommercePredictiveInventory } from "./tools/predictive-inventory.js";
 import { handleEcommerceReorderWorkflow } from "./tools/reorder-workflow.js";
 import { handleEcommerceSendNotification } from "./tools/notify.js";
+import { handleEcommerceCompetitorRadar } from "./tools/competitor-radar.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -689,6 +690,53 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_competitor_radar",
+        description: "เรดาร์เฝ้าดูคู่แข่ง: scan ราคา/สต็อกคู่แข่งแบบ rate-limited (token bucket + jitter), เก็บ snapshot time-series พร้อม retention, และสร้าง playbook ตอบโต้ 3 แบบ (match/promo/hold) ตาม margin จาก COGS",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["scan", "record_snapshot", "get_history", "price_war_playbook", "prune_history"] },
+            platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+            productId: { type: "string" },
+            skuId: { type: "string" },
+            maxPerMinute: { type: "number", default: 6, description: "scan rate cap (1-30)" },
+            limit: { type: "number" },
+            retentionDays: { type: "number", default: 90 },
+            targets: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  competitorId: { type: "string" },
+                  skuId: { type: "string" }
+                },
+                required: ["skuId"]
+              }
+            },
+            snapshot: {
+              type: "object",
+              properties: {
+                platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+                competitorId: { type: "string" },
+                skuId: { type: "string" },
+                title: { type: "string" },
+                price: { type: "number" },
+                stock: { type: "number" },
+                soldCount: { type: "number" },
+                rating: { type: "number" },
+                timestamp: { type: "number" }
+              },
+              required: ["platform", "skuId", "price"]
+            },
+            myPrice: { type: "number" },
+            competitorPrice: { type: "number" },
+            unitCost: { type: "number", description: "fallback total cost when no COGS cache entry exists" },
+            minMarginPercent: { type: "number", default: 0 }
+          },
+          required: ["action"]
+        }
       }
     ],
   };
@@ -810,6 +858,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceReorderWorkflow(args);
     case "ecommerce_send_notification":
       return await handleEcommerceSendNotification(args);
+    case "ecommerce_competitor_radar":
+      return await handleEcommerceCompetitorRadar(args);
     default:
       return {
         content: [

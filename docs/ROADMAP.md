@@ -33,13 +33,16 @@
 
 **เป้าหมาย:** Dynamic pricing ที่อิงข้อมูลคู่แข่งจริง พร้อมเกราะป้องกันการโดนแบน
 
-- [ ] **Task 14.1** — `ecommerce_competitor_scan`: scrape ราคา/สต็อก/ยอดขายสินค้าคู่แข่ง
-      ผ่าน CDP ด้วย rate limiting แบบ token bucket + random jitter (ผ่าน ProxyManager ที่มีอยู่)
-- [ ] **Task 14.2** — ตาราง `competitor_snapshots` ใน SQLite + retention policy
-      (ต่อยอด key `competitor_history:*` ที่มีอยู่แล้วให้เป็น time-series จริง)
-- [ ] **Task 14.3** — Price-war playbook: เมื่อคู่แข่งลดราคา → เสนอแผนตอบโต้ 3 แบบ
-      (ตามลด / แพ็กเซจโปรโมชัน / ไม่ทำอะไร) พร้อมผลกระทบ margin จาก COGS data
-- [ ] **Task 14.4** — Tests + REPORT_PHASE_14
+- [x] **Task 14.1** — `ecommerce_competitor_radar` (scan): token-bucket rate limiting
+      (1–30 scans/min) + random jitter + บันทึก snapshot อัตโนมัติ; extractor เป็นแบบ
+      pluggable (built-in = mock ตาม convention ของ repo, จะสลับเป็น CDP extractor จริง
+      เมื่อมี live browser ใน Phase 15)
+- [x] **Task 14.2** — time-series snapshot ใน SQLite (key convention `competitor:{platform}:{skuId}`
+      + `competitor_history:*`), history cap 500 จุด, retention pruning ตามจำนวนวัน
+- [x] **Task 14.3** — Price-war playbook: แผนตอบโต้ 3 แบบ (match / promo-bundle / hold)
+      คำนวณ margin จาก COGS (cache key `cogs:{platform}:{productId}:{skuId}` หรือระบุ
+      unitCost ตรง ๆ) พร้อม margin floor ป้องกันขายขาดทุน + คำแนะนำอัตโนมัติ
+- [x] **Task 14.4** — Tests (15 ตัวใหม่) + REPORT_PHASE_14
 
 **ความเสี่ยง:** การ scrape หนักอาจโดนแพลตฟอร์มบล็อก → ต้อง cap การ scan และทำ whitelist รายการที่เฝ้าดู
 
