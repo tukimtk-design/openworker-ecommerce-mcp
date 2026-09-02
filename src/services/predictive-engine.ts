@@ -1,6 +1,9 @@
 // Predictive Inventory Engine (Phase 12)
 // Pure, deterministic forecasting functions: weighted sales velocity, linear trend,
 // safety stock, stockout date, reorder point and suggested reorder quantity.
+// Phase 13: optional seasonality-aware depletion and reorder calculations.
+
+import { getDemandMultiplier, seasonalAdjustedDemand } from "./seasonality.js";
 
 export interface SalesRecord {
     date: string;      // ISO date "YYYY-MM-DD"
@@ -19,6 +22,7 @@ export interface ForecastOptions {
     targetCoverDays?: number;  // desired days of stock after reorder (default 30)
     serviceLevel?: number;     // 0.90 | 0.95 | 0.98 | 0.99 (default 0.95)
     today?: string;            // ISO date override for deterministic runs
+    useSeasonality?: boolean;  // apply holiday/mega-sale demand multipliers (Phase 13)
 }
 
 export type InventoryRisk = "critical" | "warning" | "healthy";
@@ -39,6 +43,7 @@ export interface InventoryForecast {
     reorderPoint: number;
     suggestedReorderQty: number;
     risk: InventoryRisk;
+    seasonalityApplied: boolean;
     recommendation: string;
 }
 
@@ -134,12 +139,19 @@ export function zScoreForServiceLevel(level: number | undefined): number {
     return Z_SCORES[key] ?? 1.645;
 }
 
-/** Days until stock runs out under trend-adjusted demand; capped at COVER_CAP_DAYS. */
-function simulateDaysOfCover(currentStock: number, avgDaily: number, slope: number): number {
+/** Days until stock runs out under trend-adjusted demand; capped at COVER_CAP_DAYS.
+ *  `seasonalFactor(day)` optionally scales the base demand for that future day. */
+function simulateDaysOfCover(
+    currentStock: number,
+    avgDaily: number,
+    slope: number,
+    seasonalFactor?: (day: number) => number
+): number {
     if (currentStock <= 0) return 0;
     let remaining = currentStock;
     for (let day = 0; day < COVER_CAP_DAYS; day++) {
-        const demand = Math.max(0, avgDaily + slope * day);
+        const base = Math.max(0, avgDaily + slope * day);
+        const demand = base * (seasonalFactor ? seasonalFactor(day) : 1);
         remaining -= demand;
         if (remaining <= 0) return day + 1;
     }
@@ -167,12 +179,21 @@ export function forecastInventory(input: ForecastProductInput, options: Forecast
     const slope = trendSlope(values);
     const projectedDailySales = Math.max(0, avgDailySales + slope * (leadTimeDays / 2));
 
-    const daysOfCover = simulateDaysOfCover(stock, avgDailySales, slope);
+    const useSeasonality = options.useSeasonality === true;
+    const seasonalFactor = useSeasonality
+        ? (day: number) => getDemandMultiplier(addDays(asOf, day)).multiplier
+        : undefined;
+
+    const daysOfCover = simulateDaysOfCover(stock, avgDailySales, slope, seasonalFactor);
     const stockoutDate = daysOfCover >= COVER_CAP_DAYS ? null : addDays(asOf, daysOfCover);
 
     const sigma = stdDev(values);
     const safetyStock = Math.ceil(z * sigma * Math.sqrt(leadTimeDays));
-    const leadTimeDemand = Math.ceil(projectedDailySales * leadTimeDays);
+    const leadTimeDemand = Math.ceil(
+        useSeasonality
+            ? seasonalAdjustedDemand(projectedDailySales, asOf, leadTimeDays) * leadTimeDays
+            : projectedDailySales * leadTimeDays
+    );
     const reorderPoint = leadTimeDemand + safetyStock;
     const suggestedReorderQty = Math.max(0, Math.ceil(targetCoverDays * projectedDailySales) - stock);
 
@@ -210,6 +231,7 @@ export function forecastInventory(input: ForecastProductInput, options: Forecast
         reorderPoint,
         suggestedReorderQty,
         risk,
+        seasonalityApplied: useSeasonality,
         recommendation,
     };
 }

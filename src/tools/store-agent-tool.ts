@@ -25,7 +25,26 @@ export async function handleEcommerceAutonomousStoreManager(args: any) {
         return {
             content: [{ type: "text", text: JSON.stringify({ status: "success", message: "Agent tick executed", result }) }]
         };
+    } else if (action === "configure_watchdog") {
+        const products = args?.products;
+        if (products !== null && !Array.isArray(products)) {
+            return { isError: true, content: [{ type: "text", text: "products must be an array of {productId, currentStock, salesHistory} (or null to disable)" }] };
+        }
+        loop.setInventoryWatchdog(products === null ? null : {
+            products,
+            options: {
+                useSeasonality: args?.useSeasonality === true,
+                leadTimeDays: args?.leadTimeDays,
+                targetCoverDays: args?.targetCoverDays,
+            },
+            autoCreatePo: args?.autoCreatePo !== false,
+            notifyOnCritical: args?.notifyOnCritical === true,
+            poNote: args?.poNote,
+        });
+        return {
+            content: [{ type: "text", text: JSON.stringify({ status: "success", message: products === null ? "Inventory watchdog disabled" : `Inventory watchdog configured with ${products.length} products` }) }]
+        };
     }
 
-    return { isError: true, content: [{ type: "text", text: "Invalid action. Use start, stop, status, or trigger_now." }] };
+    return { isError: true, content: [{ type: "text", text: "Invalid action. Use start, stop, status, trigger_now, or configure_watchdog." }] };
 }

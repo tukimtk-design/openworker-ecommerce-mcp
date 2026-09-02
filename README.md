@@ -172,3 +172,21 @@ New tool `ecommerce_predictive_inventory` — forecast stock depletion from sale
 - `SqliteStore` supports `OPENWORKER_DB_PATH` / `OPENWORKER_DATA_DIR` env overrides and transparently reads legacy pre-refactor data.
 - Debug tool: `node scripts/inspect-db.mjs` to inspect the cache DB.
 - Roadmap for the next phases: see [docs/ROADMAP.md](docs/ROADMAP.md).
+
+---
+
+## 🚀 Phase 13 Features (Reorder Automation & Seasonality)
+
+### Seasonality-Aware Forecasting
+Pass `"useSeasonality": true` to `ecommerce_predictive_inventory` to factor in Thai/CN holidays, Double-Day mega sales (9.9/10.10/11.11/12.12 with pre-sale ramp) and payday windows into stockout dates and reorder points.
+
+### Reorder Workflow (PO Drafts)
+New tool `ecommerce_reorder_workflow` — turn critical forecasts into Purchase Order drafts stored in SQLite, list/filter them, and advance their lifecycle (`draft → ordered → received / cancelled`).
+
+### Inventory Watchdog in the Agent Loop
+`ecommerce_autonomous_store_manager` now supports `configure_watchdog`: give it a product watchlist and every agent tick will forecast stock, auto-draft one consolidated PO for all critical items, and optionally notify you.
+
+### Outbound Alerts
+New tool `ecommerce_send_notification` — LINE Messaging API or Telegram Bot alerts. Without tokens it dry-runs (`simulated`), so automation is safe in sandboxes. Set `LINE_CHANNEL_ACCESS_TOKEN`/`LINE_TARGET_ID` or `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` to go live.
+
+Phase 13 details: [docs/REPORT_PHASE_13.md](docs/REPORT_PHASE_13.md)

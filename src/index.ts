@@ -3,6 +3,8 @@ import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
 import { handleEcommercePredictiveInventory } from "./tools/predictive-inventory.js";
+import { handleEcommerceReorderWorkflow } from "./tools/reorder-workflow.js";
+import { handleEcommerceSendNotification } from "./tools/notify.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -393,12 +395,41 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "ecommerce_autonomous_store_manager",
-        description: "Background agent loop for autonomous store management",
+        description: "Background agent loop for autonomous store management (supports Phase 13 inventory watchdog via configure_watchdog)",
         inputSchema: {
           type: "object",
           properties: {
-            action: { type: "string", enum: ["start", "stop", "status", "trigger_now"] },
-            intervalMs: { type: "number" }
+            action: { type: "string", enum: ["start", "stop", "status", "trigger_now", "configure_watchdog"] },
+            intervalMs: { type: "number" },
+            products: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+                  productId: { type: "string" },
+                  currentStock: { type: "number" },
+                  salesHistory: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        date: { type: "string", description: "YYYY-MM-DD" },
+                        unitsSold: { type: "number" }
+                      },
+                      required: ["date", "unitsSold"]
+                    }
+                  }
+                },
+                required: ["productId", "currentStock", "salesHistory"]
+              }
+            },
+            useSeasonality: { type: "boolean", default: false },
+            leadTimeDays: { type: "number", default: 7 },
+            targetCoverDays: { type: "number", default: 30 },
+            autoCreatePo: { type: "boolean", default: true },
+            notifyOnCritical: { type: "boolean", default: false },
+            poNote: { type: "string" }
           },
           required: ["action"]
         }
@@ -613,6 +644,51 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_reorder_workflow",
+        description: "จัดการ Purchase Order จากผลพยากรณ์สต็อก: สร้าง PO draft อัตโนมัติจากรายการ critical, ดูรายการ PO, และอัปเดตสถานะ (draft/ordered/received/cancelled)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["create_po", "list_pos", "update_po_status"] },
+            note: { type: "string" },
+            status: { type: "string", enum: ["draft", "ordered", "received", "cancelled"] },
+            poId: { type: "string" },
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  platform: { type: "string", enum: ["shopee", "tiktok", "lazada", "lnwshop"] },
+                  productId: { type: "string" },
+                  qty: { type: "number" },
+                  supplierName: { type: "string" },
+                  supplierUrl: { type: "string" },
+                  unitCost: { type: "number" }
+                },
+                required: ["productId", "qty"]
+              }
+            }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_send_notification",
+        description: "ส่งการแจ้งเตือนถึงเจ้าของร้านผ่าน LINE Messaging API หรือ Telegram Bot (เตือนสินค้าใกล้หมด, คู่แข่งตัดราคา ฯลฯ) — ถ้าไม่ได้ตั้งค่า token จะทำงานแบบ dry-run (ไม่ส่งจริง)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["send", "history"] },
+            channel: { type: "string", enum: ["line", "telegram"] },
+            message: { type: "string" },
+            targetId: { type: "string", description: "LINE user/room id (optional, defaults to LINE_TARGET_ID env)" },
+            chatId: { type: "string", description: "Telegram chat id (optional, defaults to TELEGRAM_CHAT_ID env)" },
+            limit: { type: "number", default: 20 }
+          },
+          required: ["action"]
+        }
       }
     ],
   };
@@ -730,6 +806,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceGoogleAdsIntegration(args);
     case "ecommerce_predictive_inventory":
       return await handleEcommercePredictiveInventory(args);
+    case "ecommerce_reorder_workflow":
+      return await handleEcommerceReorderWorkflow(args);
+    case "ecommerce_send_notification":
+      return await handleEcommerceSendNotification(args);
     default:
       return {
         content: [

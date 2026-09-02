@@ -69,6 +69,22 @@ try {
     console.log('forecast status:', parsed.status);
     console.log('risk:', f.risk, '| daysOfCover:', f.daysOfCover, '| stockout:', f.stockoutDate, '| reorderQty:', f.suggestedReorderQty);
     console.log('recommendation:', f.recommendation);
+
+    const po = await send({
+        jsonrpc: '2.0', id: 4, method: 'tools/call',
+        params: {
+            name: 'ecommerce_reorder_workflow',
+            arguments: { action: 'create_po', items: [{ productId: 'SKU-9', qty: 120, unitCost: 35 }], note: 'smoke' },
+        },
+    });
+    const poParsed = JSON.parse(po.result.content[0].text);
+    console.log('PO created:', poParsed.purchaseOrder.poId, '| total:', poParsed.purchaseOrder.estimatedTotal);
+
+    const notify = await send({
+        jsonrpc: '2.0', id: 5, method: 'tools/call',
+        params: { name: 'ecommerce_send_notification', arguments: { action: 'send', channel: 'line', message: 'smoke alert' } },
+    });
+    console.log('notify:', JSON.parse(notify.result.content[0].text).notification.status);
     console.log('SMOKE OK');
 } catch (e) {
     console.error('SMOKE FAILED:', e.message);

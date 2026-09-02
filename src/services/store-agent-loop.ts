@@ -1,6 +1,18 @@
+import { runInventoryWatchdog, WatchdogConfig, WatchdogResult } from "./inventory-watchdog.js";
+
 export class StoreAgentLoop {
     private intervalId: any = null;
     private isRunning: boolean = false;
+    private watchdogConfig: WatchdogConfig | null = null;
+
+    /** Register the Phase 13 inventory watchlist; runs on every tick once set. */
+    setInventoryWatchdog(config: WatchdogConfig | null) {
+        this.watchdogConfig = config;
+    }
+
+    getInventoryWatchdog(): WatchdogConfig | null {
+        return this.watchdogConfig;
+    }
 
     startLoop(intervalMs: number = 3600000) {
         if (this.isRunning) return;
@@ -30,13 +42,26 @@ export class StoreAgentLoop {
 
     async executeTick() {
         console.error(`[StoreAgentLoop] Executing scheduled tick at ${new Date().toISOString()}`);
+        const tasksExecuted = ["chat_replied", "prices_checked", "stock_rebalanced"];
+        let watchdogResult: WatchdogResult | null = null;
+
+        if (this.watchdogConfig && this.watchdogConfig.products.length > 0) {
+            try {
+                watchdogResult = await runInventoryWatchdog(this.watchdogConfig);
+                tasksExecuted.push("inventory_watchdog");
+            } catch (e: any) {
+                console.error(`[StoreAgentLoop] Inventory watchdog failed: ${e.message}`);
+            }
+        }
+
         return {
              status: "completed",
-             tasksExecuted: ["chat_replied", "prices_checked", "stock_rebalanced"]
+             tasksExecuted,
+             watchdog: watchdogResult
         };
     }
 
     getStatus() {
-        return { isRunning: this.isRunning };
+        return { isRunning: this.isRunning, watchdogConfigured: !!this.watchdogConfig };
     }
 }

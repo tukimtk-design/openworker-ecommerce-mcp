@@ -15,15 +15,15 @@
 
 **เป้าหมาย:** เปลี่ยน "คำแนะนำ" จาก predictive engine ให้กลายเป็น "การกระทำ" อัตโนมัติจบวงจร
 
-- [ ] **Task 13.1** — `ecommerce_reorder_workflow`: รับผลลัพธ์ `bulk_forecast` ฝั่ง critical
+- [x] **Task 13.1** — `ecommerce_reorder_workflow`: รับผลลัพธ์ `bulk_forecast` ฝั่ง critical
       → สร้าง Draft Purchase Order (ร้านค้า, SKU, จำนวน, supplier link) และบันทึกลง SQLite
-- [ ] **Task 13.2** — Seasonality & Holiday Calendar (ไทย + จีน + วันแห่งการให้รางวัล
+- [x] **Task 13.2** — Seasonality & Holiday Calendar (ไทย + จีน + วันแห่งการให้รางวัล
       9.9/10.10/11.11/12.12): multiplier ต่อช่วงวัน เพื่อปรับ projected demand ให้แม่นขึ้น
-- [ ] **Task 13.3** — เชื่อม predictive engine เข้า `ecommerce_autonomous_store_manager`:
+- [x] **Task 13.3** — เชื่อม predictive engine เข้า `ecommerce_autonomous_store_manager`:
       agent loop เช็ก watchlist ทุกวัน → แจ้งเตือน/สร้าง PO draft เองเมื่อเข้าเขต critical
-- [ ] **Task 13.4** — Notification channels: LINE Messaging API และ/หรือ Telegram Bot
+- [x] **Task 13.4** — Notification channels: LINE Messaging API และ/หรือ Telegram Bot
       สำหรับ alert "สินค้าใกล้หมด" และ "คู่แข่งตัดราคา" (แม่แบบใช้ร่วมกันทุกเฟสถัดไป)
-- [ ] **Task 13.5** — Tests + REPORT_PHASE_13
+- [x] **Task 13.5** — Tests + REPORT_PHASE_13
 
 **Acceptance:** agent loop รัน 24 ชม. ใน mock environment แล้วสร้าง PO draft ถูกต้อง ≥ 95% ของ scenario ทดสอบ
 
