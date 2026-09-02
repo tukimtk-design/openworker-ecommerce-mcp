@@ -1,6 +1,349 @@
 {
   "tools": [
     {
+      "name": "ecommerce_repricer_daemon",
+      "description": "Phase 14: Autonomous Repricer Daemon with margin floor & anti-oscillation safeguards",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "evaluate_and_reprice",
+              "set_sku_rule"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "shopee",
+              "tiktok",
+              "lazada",
+              "lnwshop"
+            ]
+          },
+          "skuId": {
+            "type": "string"
+          },
+          "currentPrice": {
+            "type": "number"
+          },
+          "competitorPrice": {
+            "type": "number"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "UNDERCUT_COMPETITOR",
+              "MATCH_COMPETITOR",
+              "TARGET_MARGIN"
+            ]
+          },
+          "undercutAmount": {
+            "type": "number"
+          },
+          "targetMarginPercent": {
+            "type": "number"
+          },
+          "maxUpdatesPerDay": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_cognition_router",
+      "description": "Phase 14: Tiered Cognition Router to classify requests and minimize LLM token costs",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "intent"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_review_miner",
+      "description": "Phase 14: Competitor Review Pain-Point Miner & Listing USP generator",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rating": {
+                  "type": "number"
+                },
+                "comment": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "rating",
+                "comment"
+              ]
+            }
+          }
+        },
+        "required": [
+          "reviews"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_market_sensors",
+      "description": "Phase 13: Market Sensor Mesh - Competitor Diff, Sales Velocity Estimation, and Trend Radar",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "diff_competitor",
+              "velocity_estimate",
+              "trend_radar"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "shopee",
+              "tiktok",
+              "lazada",
+              "lnwshop"
+            ]
+          },
+          "skuId": {
+            "type": "string"
+          },
+          "competitorId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "stock": {
+            "type": "number"
+          },
+          "soldCount": {
+            "type": "number"
+          },
+          "rating": {
+            "type": "number"
+          },
+          "category": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_profit_ledger",
+      "description": "Phase 12: Profit Ledger & COGS Net Margin calculation engine with hardcoded margin floors",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "set_cogs",
+              "compute_net_margin",
+              "get_ledger"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "shopee",
+              "tiktok",
+              "lazada",
+              "lnwshop"
+            ]
+          },
+          "productId": {
+            "type": "string"
+          },
+          "skuId": {
+            "type": "string"
+          },
+          "cogs": {
+            "type": "number"
+          },
+          "inboundShipping": {
+            "type": "number"
+          },
+          "packagingCost": {
+            "type": "number"
+          },
+          "minMarginPercent": {
+            "type": "number"
+          },
+          "proposedPrice": {
+            "type": "number"
+          },
+          "platformFeeRate": {
+            "type": "number"
+          },
+          "shippingBurden": {
+            "type": "number"
+          },
+          "adSpendPerUnit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_autonomy_control",
+      "description": "Phase 12: Autonomous governor, kill-switch, and dry-run mandate manager",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "get_status",
+              "set_mandate",
+              "kill_switch",
+              "set_dry_run"
+            ]
+          },
+          "maxPriceChangePercent": {
+            "type": "number"
+          },
+          "dailyAdBudgetCap": {
+            "type": "number"
+          },
+          "maxSkusPerBatch": {
+            "type": "number"
+          },
+          "activate": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_market_hunter",
+      "description": "Autonomous Market Opportunity Hunter - detects arbitrage and trending viral products.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "shopee",
+              "tiktok",
+              "lazada",
+              "lnwshop"
+            ]
+          },
+          "keyword": {
+            "type": "string"
+          },
+          "minMarginPercent": {
+            "type": "number",
+            "default": 15
+          }
+        },
+        "required": [
+          "platform"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_dynamic_margin_optimization",
+      "description": "Dynamic Pricing - auto-calculates and executes margin optimization against competitors.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "shopee",
+              "tiktok",
+              "lazada",
+              "lnwshop"
+            ]
+          },
+          "productId": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform",
+          "productId",
+          "rule"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_campaign_participation",
+      "description": "Auto-enroll products into Flash Sales and store campaigns to maximize ROI.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "shopee",
+              "tiktok",
+              "lazada",
+              "lnwshop"
+            ]
+          },
+          "campaignId": {
+            "type": "string"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "platform",
+          "campaignId"
+        ]
+      }
+    },
+    {
       "name": "browser_attach_existing",
       "description": "ตรวจสอบการเชื่อมต่อ Chrome/Edge บนพอร์ต 9222 และแสดงรายการ Tab ร้านค้า Shopee/TikTok/Lazada",
       "inputSchema": {
@@ -106,6 +449,10 @@
             "type": "number"
           },
           "maxPriceDropPercent": {
+            "type": "number",
+            "default": 50
+          },
+          "minPriceFloor": {
             "type": "number",
             "default": 50
           }
@@ -951,6 +1298,207 @@
         "required": [
           "platform",
           "action"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_actuator_router",
+      "description": "Hybrid API Actuator Router for switching between Official Open API, Internal Session XHR, and Headless CDP fallback with circuit breaker",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "SHOPEE",
+              "TIKTOK_SHOP",
+              "LAZADA",
+              "LNWSHOP"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "UPDATE_PRICE",
+              "UPDATE_STOCK",
+              "PUBLISH_PRODUCT",
+              "FETCH_ORDERS"
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "hasApiKey": {
+                "type": "boolean"
+              },
+              "price": {
+                "type": "number"
+              },
+              "stock": {
+                "type": "number"
+              },
+              "sku": {
+                "type": "string"
+              }
+            }
+          },
+          "availableChannels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "OFFICIAL_OPEN_API",
+                "INTERNAL_XHR_SESSION",
+                "HEADLESS_CDP_FALLBACK"
+              ]
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "platform",
+          "action"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_supplier_bridge",
+      "description": "Cross-Border Supplier Arbitrage Bridge for 1688, Taobao, and AliExpress with landed cost calculations and margin ranking",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domesticSku": {
+            "type": "string"
+          },
+          "domesticTitle": {
+            "type": "string"
+          },
+          "domesticSellingPrice": {
+            "type": "number"
+          },
+          "targetNetMarginPercent": {
+            "type": "number"
+          },
+          "suppliers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "supplierPlatform": {
+                  "type": "string",
+                  "enum": [
+                    "1688",
+                    "TAOBAO",
+                    "ALIEXPRESS"
+                  ]
+                },
+                "supplierProductId": {
+                  "type": "string"
+                },
+                "supplierTitle": {
+                  "type": "string"
+                },
+                "sourceCurrency": {
+                  "type": "string",
+                  "enum": [
+                    "CNY",
+                    "USD"
+                  ]
+                },
+                "sourcePrice": {
+                  "type": "number"
+                },
+                "estimatedFreightThb": {
+                  "type": "number"
+                },
+                "importTaxRate": {
+                  "type": "number"
+                },
+                "cnyToThbRate": {
+                  "type": "number"
+                },
+                "moq": {
+                  "type": "number"
+                },
+                "supplierRating": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "supplierPlatform",
+                "supplierProductId",
+                "sourcePrice",
+                "sourceCurrency"
+              ]
+            }
+          }
+        },
+        "required": [
+          "domesticSku",
+          "domesticSellingPrice",
+          "suppliers"
+        ]
+      }
+    },
+    {
+      "name": "ecommerce_listing_ab_test",
+      "description": "Automated Listing A/B Testing Engine for titles and cover images with Revenue Per Impression (RPI) attribution",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "experimentId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "minImpressionsPerVariant": {
+            "type": "number"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "variantId": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "coverImageUrl": {
+                  "type": "string"
+                },
+                "impressions": {
+                  "type": "number"
+                },
+                "clicks": {
+                  "type": "number"
+                },
+                "orders": {
+                  "type": "number"
+                },
+                "revenueThb": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "variantId",
+                "title",
+                "impressions",
+                "clicks",
+                "orders",
+                "revenueThb"
+              ]
+            }
+          }
+        },
+        "required": [
+          "experimentId",
+          "productId",
+          "variants"
         ]
       }
     }

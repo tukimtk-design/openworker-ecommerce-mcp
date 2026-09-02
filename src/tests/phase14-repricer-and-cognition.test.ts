@@ -7,7 +7,7 @@ import { handleEcommerceProfitLedger } from "../tools/profit-ledger.js";
 
 describe("Phase 14: Autonomous Repricer & Tiered Cognition", () => {
   it("should evaluate and reprice with UNDERCUT_COMPETITOR and enforce net margin floor", async () => {
-    const sku = "AUTO-REPRICE-SKU-1";
+    const sku = `AUTO-REPRICE-SKU-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     // 1. Setup COGS and 15% min margin floor
     await handleEcommerceProfitLedger({

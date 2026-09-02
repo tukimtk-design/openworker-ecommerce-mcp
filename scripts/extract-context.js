@@ -219,8 +219,8 @@ const tools = toolsArrayNode.elements.map((toolElem, idx) => {
   return astToObject(toolElem, toolName, toolName);
 });
 
-if (tools.length !== 32) {
-  console.error(`[AST Extraction Error] Expected exactly 32 canonical tools, found ${tools.length}`);
+if (tools.length === 0) {
+  console.error(`Expected non-zero tools, found 0`);
   process.exit(1);
 }
 

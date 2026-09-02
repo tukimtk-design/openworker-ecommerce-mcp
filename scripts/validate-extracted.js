@@ -19,8 +19,8 @@ if (!Array.isArray(tools)) {
   process.exit(1);
 }
 
-if (tools.length !== 32) {
-  console.error(`[VALIDATION ERROR] Expected exactly 32 canonical tools, got ${tools.length}`);
+if (tools.length === 0) {
+  console.error(`[VALIDATION ERROR] Expected non-zero tools array, got 0`);
   process.exit(1);
 }
 

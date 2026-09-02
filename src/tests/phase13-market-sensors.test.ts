@@ -4,7 +4,7 @@ import { handleEcommerceMarketSensors } from "../tools/market-sensors.js";
 
 describe("Phase 13: Market Sensor Mesh", () => {
   it("should capture competitor snapshots and emit zero-waste delta diffs", async () => {
-    const sku = "COMP-SKU-999";
+    const sku = `COMP-SKU-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     // 1. Initial snapshot
     const res1 = await handleEcommerceMarketSensors({
