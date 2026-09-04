@@ -43,6 +43,7 @@ import { handleEcommerceActuatorRouter } from "./tools/actuator-tool.js";
 import { handleEcommerceSupplierBridge } from "./tools/supplier-tool.js";
 import { handleEcommerceListingAbTest } from "./tools/ab-test-tool.js";
 import { handleEcommerceSerpRankTracker } from "./tools/serp-rank-tracker-tool.js";
+import { handleEcommerceOps, ECOMMERCE_OPS_SCHEMA } from "./tools/gateway.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -64,6 +65,13 @@ const server = new Server(
 
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
+  const isAdaptiveMode = process.env.ECOMMERCE_MCP_ADAPTIVE !== "0";
+  if (isAdaptiveMode) {
+    return {
+      tools: [ECOMMERCE_OPS_SCHEMA]
+    };
+  }
+
   return {
     tools: [
       {
@@ -878,6 +886,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   switch (name) {
+    case "ecommerce_ops":
+      return await handleEcommerceOps(args);
     case "ecommerce_actuator_router":
       return await handleEcommerceActuatorRouter(args);
     case "ecommerce_supplier_bridge":
