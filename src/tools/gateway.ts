@@ -6,6 +6,8 @@ import { handleEcommerceSiteAuditCrawler } from "./site-audit-crawler-tool.js";
 import { handleEcommerceLiveSerpScraper } from "./live-serp-scraper-tool.js";
 import { handleEcommerceLnwshopCdpActuator } from "./lnwshop-cdp-actuator-tool.js";
 import { handleEcommerceOutboundSeoPublisher } from "./outbound-seo-tool.js";
+import { handleEcommerceDomTokenPruner } from "./dom-token-pruner-tool.js";
+import { handleEcommerceOutboundAutoPoster } from "./outbound-auto-poster-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./product-cloner.js";
@@ -112,6 +114,18 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     category: "seo",
     description: "Generate safe contextual outbound articles with backlink anchoring",
     handler: handleEcommerceOutboundSeoPublisher
+  },
+  dom_token_pruner: {
+    action: "dom_token_pruner",
+    category: "utility",
+    description: "Prune and compress HTML DOM reducing token overhead >90%",
+    handler: handleEcommerceDomTokenPruner
+  },
+  outbound_auto_poster: {
+    action: "outbound_auto_poster",
+    category: "actuator",
+    description: "Auto-post articles to webboards via CDP with policy guard",
+    handler: handleEcommerceOutboundAutoPoster
   },
   seo_optimizer: {
     action: "seo_optimizer",

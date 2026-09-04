@@ -3,6 +3,7 @@ import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
 import { handleEcommerceSeoContentEnricher } from "./tools/seo-content-enricher-tool.js";
 import { handleEcommerceSiteAuditCrawler } from "./tools/site-audit-crawler-tool.js";
+import { handleEcommerceDomTokenPruner } from "./tools/dom-token-pruner-tool.js";
 import { handleEcommerceLiveSerpScraper } from "./tools/live-serp-scraper-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
@@ -44,6 +45,7 @@ import { handleEcommerceActuatorRouter } from "./tools/actuator-tool.js";
 import { handleEcommerceSupplierBridge } from "./tools/supplier-tool.js";
 import { handleEcommerceListingAbTest } from "./tools/ab-test-tool.js";
 import { handleEcommerceSerpRankTracker } from "./tools/serp-rank-tracker-tool.js";
+import { handleEcommerceOutboundAutoPoster } from "./tools/outbound-auto-poster-tool.js";
 import { handleEcommerceOps, ECOMMERCE_OPS_SCHEMA } from "./tools/gateway.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -410,6 +412,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ["recipe"]
+        }
+      },
+      {
+        name: "ecommerce_dom_token_pruner",
+        description: "Phase 18: AST/Regex-based DOM Pruner to compress large HTML pages. Extracts ONLY Headings, Meta tags, and Image tags.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            htmlString: { type: "string" }
+          },
+          required: ["htmlString"]
         }
       },
       {
@@ -914,6 +927,34 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["htmlContent"]
         }
+      },
+      {
+        name: "ecommerce_outbound_auto_poster",
+        description: "Automated form poster for authorized Thai webboards/classifieds via CDP",
+        inputSchema: {
+          type: "object",
+          properties: {
+            targetUrl: { type: "string" },
+            platform: { type: "string" },
+            title: { type: "string" },
+            content: { type: "string" },
+            anchorLinks: { type: "array", items: { type: "string" } },
+            tags: { type: "array", items: { type: "string" } },
+            selectors: {
+              type: "object",
+              properties: {
+                titleInput: { type: "string" },
+                contentInput: { type: "string" },
+                tagsInput: { type: "string" },
+                anchorLinksInput: { type: "string" },
+                submitButton: { type: "string" }
+              },
+              required: ["titleInput", "contentInput", "submitButton"]
+            },
+            dryRun: { type: "boolean" }
+          },
+          required: ["targetUrl", "title", "content", "selectors"]
+        }
       }
     ],
   };
@@ -1059,10 +1100,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSeoContentEnricher(args);
     case "ecommerce_site_audit_crawler":
       return await handleEcommerceSiteAuditCrawler(args);
+    case "ecommerce_dom_token_pruner":
+      return await handleEcommerceDomTokenPruner(args);
     case "ecommerce_live_serp_scraper":
       return await handleEcommerceLiveSerpScraper(request.params.arguments);
     case "ecommerce_google_ads_integration":
       return await handleEcommerceGoogleAdsIntegration(args);
+    case "ecommerce_outbound_auto_poster":
+      return await handleEcommerceOutboundAutoPoster(args);
     default:
       return {
         content: [
