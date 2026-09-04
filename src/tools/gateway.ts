@@ -5,6 +5,7 @@ import { handleEcommerceSeoContentEnricher } from "./seo-content-enricher-tool.j
 import { handleEcommerceSiteAuditCrawler } from "./site-audit-crawler-tool.js";
 import { handleEcommerceLiveSerpScraper } from "./live-serp-scraper-tool.js";
 import { handleEcommerceLnwshopCdpActuator } from "./lnwshop-cdp-actuator-tool.js";
+import { handleEcommerceOutboundSeoPublisher } from "./outbound-seo-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./product-cloner.js";
@@ -105,6 +106,12 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     category: "seo",
     description: "Safely update LnwShop SEO meta title/description/keywords",
     handler: handleEcommerceOwLnwshopSafeSeoUpdater
+  },
+  outbound_seo_publisher: {
+    action: "outbound_seo_publisher",
+    category: "seo",
+    description: "Generate safe contextual outbound articles with backlink anchoring",
+    handler: handleEcommerceOutboundSeoPublisher
   },
   seo_optimizer: {
     action: "seo_optimizer",
