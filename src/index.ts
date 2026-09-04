@@ -1,6 +1,8 @@
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
+import { handleEcommerceSeoContentEnricher } from "./tools/seo-content-enricher-tool.js";
+import { handleEcommerceSiteAuditCrawler } from "./tools/site-audit-crawler-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
@@ -40,6 +42,7 @@ import { handleEcommerceReviewMiner } from "./tools/review-miner-tool.js";
 import { handleEcommerceActuatorRouter } from "./tools/actuator-tool.js";
 import { handleEcommerceSupplierBridge } from "./tools/supplier-tool.js";
 import { handleEcommerceListingAbTest } from "./tools/ab-test-tool.js";
+import { handleEcommerceSerpRankTracker } from "./tools/serp-rank-tracker-tool.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -791,6 +794,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "ecommerce_serp_rank_tracker",
+        description: "SERP Rank Tracker Core to track keyword positions and classify into rank bands (TOP_FIVE, STRIKING_DISTANCE, etc.)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  keyword: { type: "string" },
+                  url: { type: "string" },
+                  position: { type: "number" }
+                },
+                required: ["keyword", "url"]
+              }
+            }
+          },
+          required: ["items"]
+        }
+      },
+      {
         name: "ecommerce_listing_ab_test",
         description: "Automated Listing A/B Testing Engine for titles and cover images with Revenue Per Impression (RPI) attribution",
         inputSchema: {
@@ -818,6 +843,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["experimentId", "productId", "variants"]
         }
+      },
+      {
+        name: "ecommerce_seo_content_enricher",
+        description: "Generates E-E-A-T drafts with READY_FOR_HUMAN_REVIEW state and negative keyword guard.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            originalContent: { type: "string" },
+            targetKeywords: { type: "array", items: { type: "string" } },
+            negativeKeywords: { type: "array", items: { type: "string" } },
+            platform: { type: "string", enum: ["SHOPEE", "TIKTOK_SHOP", "LAZADA", "LNWSHOP"] }
+          },
+          required: ["originalContent", "targetKeywords", "negativeKeywords"]
+        }
+      },
+      {
+        name: "ecommerce_site_audit_crawler",
+        description: "Read-only DOM auditing (Missing Alt, H1 hierarchy, JSON-LD validity).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            htmlContent: { type: "string" }
+          },
+          required: ["htmlContent"]
+        }
       }
     ],
   };
@@ -832,6 +882,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceActuatorRouter(args);
     case "ecommerce_supplier_bridge":
       return await handleEcommerceSupplierBridge(args);
+    case "ecommerce_serp_rank_tracker":
+      return await handleEcommerceSerpRankTracker(args);
     case "ecommerce_listing_ab_test":
       return await handleEcommerceListingAbTest(args);
     case "ecommerce_repricer_daemon":
@@ -955,6 +1007,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSeoOptimizer(args);
     case "ecommerce_ow_lnwshop_safe_seo_updater":
       return await handleEcommerceOwLnwshopSafeSeoUpdater(args);
+    case "ecommerce_seo_content_enricher":
+      return await handleEcommerceSeoContentEnricher(args);
+    case "ecommerce_site_audit_crawler":
+      return await handleEcommerceSiteAuditCrawler(args);
     case "ecommerce_google_ads_integration":
       return await handleEcommerceGoogleAdsIntegration(args);
     default:
