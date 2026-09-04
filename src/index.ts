@@ -4,6 +4,7 @@ import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-upda
 import { handleEcommerceSeoContentEnricher } from "./tools/seo-content-enricher-tool.js";
 import { handleEcommerceSiteAuditCrawler } from "./tools/site-audit-crawler-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
+import { handleEcommerceLnwshopCdpActuator } from "./tools/lnwshop-cdp-actuator-tool.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
 import { handleEcommerceAutoReplyChat } from "./tools/chat-automation.js";
@@ -712,6 +713,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "ecommerce_lnwshop_cdp_actuator",
+        description: "LnwShop Admin CDP Actuator for real SEO metadata modification on capsulefill.com.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string" },
+            targetUrl: { type: "string" },
+            selectors: {
+              type: "object",
+              properties: {
+                metaTitle: { type: "string" },
+                metaKeywords: { type: "string" },
+                metaDescription: { type: "string" },
+                saveButton: { type: "string" }
+              },
+              required: ["metaTitle", "metaKeywords", "metaDescription", "saveButton"]
+            },
+            metaTitle: { type: "string" },
+            metaKeywords: { type: "array", items: { type: "string" } },
+            metaDescription: { type: "string" }
+          },
+          required: ["productId", "targetUrl", "selectors"]
+        }
+      },
+      {
         name: "ecommerce_google_ads_integration",
         description: "Integrate Google Ads Campaign Payload dispatcher and offline conversion tracking for platforms like CapsuleFill (lnwshop)",
         inputSchema: {
@@ -1023,6 +1049,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSiteAuditCrawler(args);
     case "ecommerce_google_ads_integration":
       return await handleEcommerceGoogleAdsIntegration(args);
+    case "ecommerce_lnwshop_cdp_actuator":
+      return await handleEcommerceLnwshopCdpActuator(args);
     default:
       return {
         content: [
