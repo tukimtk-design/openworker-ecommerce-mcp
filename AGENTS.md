@@ -23,3 +23,7 @@
 
 2. **SESSION & RUNTIME INTEGRITY:**
    - ควบคุมไม่ให้จำนวน MCP Tools ที่ลงทะเบียนส่ง Schema เกินความจำเป็น และรักษาความเข้ากันได้กับ Google Vertex AI และ Anthropic Claude API เป็นอันดับ 1 เสมอ
+
+3. **COPILOT SESSION BINDING:**
+   - สำหรับการปรึกษาด้านสถาปัตยกรรมและกลยุทธ์ Content กับ Microsoft 365 Copilot ต้องเชื่อมโยงตรงกับห้องหลัก **`Ecomm MCP 02`** (Conversation ID: `ca622d79-24f3-4850-80ab-f269ef431069`) เสมอ ห้ามเปิดห้องใหม่หรือส่งคำสั่งโดยไม่ระบุ Room ID นี้เด็ดขาด
+
