@@ -3,6 +3,7 @@ import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
 import { handleEcommerceSeoContentEnricher } from "./tools/seo-content-enricher-tool.js";
 import { handleEcommerceSiteAuditCrawler } from "./tools/site-audit-crawler-tool.js";
+import { handleEcommerceLiveSerpScraper } from "./tools/live-serp-scraper-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./tools/google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./tools/store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./tools/product-cloner.js";
@@ -412,6 +413,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "ecommerce_live_serp_scraper",
+        description: "Phase 17: Live Google SERP Scraper",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string" },
+            targetDomain: { type: "string" }
+          },
+          required: ["query"]
+        }
+      },
+      {
         name: "ecommerce_cached_selector_map",
         description: "Manage cached DOM selectors",
         inputSchema: {
@@ -709,6 +722,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             metaDescription: { type: "string" }
           },
           required: ["platform", "productId"]
+        }
+      },
+      {
+        name: "ecommerce_lnwshop_cdp_actuator",
+        description: "LnwShop Admin CDP Actuator for real SEO metadata modification on capsulefill.com.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string" },
+            targetUrl: { type: "string" },
+            selectors: {
+              type: "object",
+              properties: {
+                metaTitle: { type: "string" },
+                metaKeywords: { type: "string" },
+                metaDescription: { type: "string" },
+                saveButton: { type: "string" }
+              },
+              required: ["metaTitle", "metaKeywords", "metaDescription", "saveButton"]
+            },
+            metaTitle: { type: "string" },
+            metaKeywords: { type: "array", items: { type: "string" } },
+            metaDescription: { type: "string" }
+          },
+          required: ["productId", "targetUrl", "selectors"]
         }
       },
       {
@@ -1021,6 +1059,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceSeoContentEnricher(args);
     case "ecommerce_site_audit_crawler":
       return await handleEcommerceSiteAuditCrawler(args);
+    case "ecommerce_live_serp_scraper":
+      return await handleEcommerceLiveSerpScraper(request.params.arguments);
     case "ecommerce_google_ads_integration":
       return await handleEcommerceGoogleAdsIntegration(args);
     default:

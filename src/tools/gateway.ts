@@ -3,6 +3,8 @@ import { handleEcommerceSeoOptimizer } from "./seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./lnwshop-seo-updater.js";
 import { handleEcommerceSeoContentEnricher } from "./seo-content-enricher-tool.js";
 import { handleEcommerceSiteAuditCrawler } from "./site-audit-crawler-tool.js";
+import { handleEcommerceLiveSerpScraper } from "./live-serp-scraper-tool.js";
+import { handleEcommerceLnwshopCdpActuator } from "./lnwshop-cdp-actuator-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./store-agent-tool.js";
 import { handleEcommerceCloneProduct } from "./product-cloner.js";
@@ -85,6 +87,18 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     category: "seo",
     description: "Audit site DOM, schema markup, and metadata",
     handler: handleEcommerceSiteAuditCrawler
+  },
+  live_serp_scraper: {
+    action: "live_serp_scraper",
+    category: "seo",
+    description: "Scrape live Google SERP with negative keyword filtering",
+    handler: handleEcommerceLiveSerpScraper
+  },
+  lnwshop_cdp_actuator: {
+    action: "lnwshop_cdp_actuator",
+    category: "actuator",
+    description: "Update LnwShop product SEO metadata via CDP Headless browser",
+    handler: handleEcommerceLnwshopCdpActuator
   },
   lnwshop_safe_seo_updater: {
     action: "lnwshop_safe_seo_updater",
