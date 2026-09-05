@@ -1,0 +1,284 @@
+diff --git a/src/index.ts b/src/index.ts
+index 8396d52..e6b329a 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -928,6 +928,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
+           required: ["htmlContent"]
+         }
+       },
++      {
++        name: "ecommerce_topic_cluster_scheduler",
++        description: "Automated SEO Topic Cluster Publisher",
++        inputSchema: {
++          type: "object",
++          properties: {
++            articles: {
++              type: "array",
++              items: {
++                type: "object",
++                properties: {
++                  id: { type: "string" },
++                  title: { type: "string" },
++                  content: { type: "string" },
++                  targetKeyword: { type: "string" },
++                  publishDate: { type: "string" }
++                },
++                required: ["id", "title", "content", "targetKeyword"]
++              }
++            }
++          },
++          required: ["articles"]
++        }
++      },
+       {
+         name: "ecommerce_outbound_auto_poster",
+         description: "Automated form poster for authorized Thai webboards/classifieds via CDP",
+@@ -1108,6 +1132,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
+       return await handleEcommerceGoogleAdsIntegration(args);
+     case "ecommerce_outbound_auto_poster":
+       return await handleEcommerceOutboundAutoPoster(args);
++    case "ecommerce_topic_cluster_scheduler":
++      return await handleEcommerceOps({ action: "topic_cluster_scheduler", params: args });
+     default:
+       return {
+         content: [
+diff --git a/src/services/seo/topic-cluster-scheduler.ts b/src/services/seo/topic-cluster-scheduler.ts
+new file mode 100644
+index 0000000..05255ce
+--- /dev/null
++++ b/src/services/seo/topic-cluster-scheduler.ts
+@@ -0,0 +1,69 @@
++import { SeoPolicyGuard } from "./seo-policy-guard.js";
++
++export interface ScheduledArticle {
++  id: string;
++  title: string;
++  content: string;
++  targetKeyword: string;
++  publishDate?: string;
++}
++
++export interface SchedulingResult {
++  scheduledArticles: ScheduledArticle[];
++  linkGraph: Record<string, string[]>;
++  report: string;
++}
++
++export class TopicClusterScheduler {
++  /**
++   * Schedule articles and create an internal link graph.
++   * Enforces SEO negative keywords using SeoPolicyGuard.
++   */
++  public scheduleCluster(articles: ScheduledArticle[]): SchedulingResult {
++    const scheduledArticles: ScheduledArticle[] = [];
++    const linkGraph: Record<string, string[]> = {};
++
++    // Validate articles using SeoPolicyGuard
++    for (const article of articles) {
++      const titleCheck = SeoPolicyGuard.checkPolicy({ text: article.title });
++      if (!titleCheck.isSafe) {
++        throw new Error(`Policy violation in title for article ${article.id}: ${titleCheck.reason}`);
++      }
++
++      const contentCheck = SeoPolicyGuard.checkPolicy({ text: article.content });
++      if (!contentCheck.isSafe) {
++        throw new Error(`Policy violation in content for article ${article.id}: ${contentCheck.reason}`);
++      }
++
++      const keywordCheck = SeoPolicyGuard.checkPolicy({ text: article.targetKeyword });
++      if (!keywordCheck.isSafe) {
++        throw new Error(`Policy violation in keyword for article ${article.id}: ${keywordCheck.reason}`);
++      }
++    }
++
++    // Schedule and generate link graph (Ring structure for simplicity)
++    const now = new Date();
++    for (let i = 0; i < articles.length; i++) {
++      const article = articles[i];
++      const nextArticle = articles[(i + 1) % articles.length];
++
++      // Schedule for 1 day apart
++      const publishDate = new Date(now);
++      publishDate.setDate(publishDate.getDate() + i);
++
++      scheduledArticles.push({
++        ...article,
++        publishDate: publishDate.toISOString()
++      });
++
++      // Internal link to the next article
++      linkGraph[article.id] = [nextArticle.id];
++    }
++
++    return {
++      scheduledArticles,
++      linkGraph,
++      report: `Successfully scheduled ${articles.length} articles and generated internal link graph.`
++    };
++  }
++}
+diff --git a/src/tests/topic-cluster-scheduler.test.ts b/src/tests/topic-cluster-scheduler.test.ts
+new file mode 100644
+index 0000000..57360be
+--- /dev/null
++++ b/src/tests/topic-cluster-scheduler.test.ts
+@@ -0,0 +1,97 @@
++import test from "node:test";
++import assert from "node:assert";
++import { TopicClusterScheduler } from "../services/seo/topic-cluster-scheduler.js";
++
++test("TopicClusterScheduler - successful scheduling", () => {
++  const scheduler = new TopicClusterScheduler();
++  const articles = [
++    {
++      id: "a1",
++      title: "บทความทั่วไป 1",
++      content: "เนื้อหาที่ไม่มีคำต้องห้าม",
++      targetKeyword: "ทั่วไป"
++    },
++    {
++      id: "a2",
++      title: "บทความทั่วไป 2",
++      content: "เนื้อหาที่ดีมาก",
++      targetKeyword: "ดีมาก"
++    }
++  ];
++
++  const result = scheduler.scheduleCluster(articles);
++  assert.strictEqual(result.scheduledArticles.length, 2);
++  assert.strictEqual(Object.keys(result.linkGraph).length, 2);
++  
++  // Test link graph (Ring structure)
++  assert.deepStrictEqual(result.linkGraph["a1"], ["a2"]);
++  assert.deepStrictEqual(result.linkGraph["a2"], ["a1"]);
++});
++
++test("TopicClusterScheduler - reject negative keyword 'มือสอง'", () => {
++  const scheduler = new TopicClusterScheduler();
++  const articles = [
++    {
++      id: "a1",
++      title: "ขายของมือสอง",
++      content: "เนื้อหา",
++      targetKeyword: "ทั่วไป"
++    }
++  ];
++
++  assert.throws(
++    () => scheduler.scheduleCluster(articles),
++    (err: Error) => err.message.includes("Policy violation in title") && err.message.includes("มือสอง")
++  );
++});
++
++test("TopicClusterScheduler - reject negative keyword 'ปิดฝาฟอยล์'", () => {
++  const scheduler = new TopicClusterScheduler();
++  const articles = [
++    {
++      id: "a1",
++      title: "บทความทั่วไป",
++      content: "มีคำว่าปิดฝาฟอยล์",
++      targetKeyword: "ทั่วไป"
++    }
++  ];
++
++  assert.throws(
++    () => scheduler.scheduleCluster(articles),
++    (err: Error) => err.message.includes("Policy violation in content") && err.message.includes("ปิดฝาฟอยล์")
++  );
++});
++
++test("TopicClusterScheduler - reject negative keyword 'กระปุก'", () => {
++  const scheduler = new TopicClusterScheduler();
++  const articles = [
++    {
++      id: "a1",
++      title: "บทความทั่วไป",
++      content: "มีคำว่ากระปุก",
++      targetKeyword: "ทั่วไป"
++    }
++  ];
++
++  assert.throws(
++    () => scheduler.scheduleCluster(articles),
++    (err: Error) => err.message.includes("Policy violation in content") && err.message.includes("กระปุก")
++  );
++});
++
++test("TopicClusterScheduler - reject negative keyword 'อย.'", () => {
++  const scheduler = new TopicClusterScheduler();
++  const articles = [
++    {
++      id: "a1",
++      title: "บทความทั่วไป",
++      content: "มีคำว่า อย. ปะปนอยู่",
++      targetKeyword: "ทั่วไป"
++    }
++  ];
++
++  assert.throws(
++    () => scheduler.scheduleCluster(articles),
++    (err: Error) => err.message.includes("Policy violation in content") && err.message.includes("อย.")
++  );
++});
+diff --git a/src/tools/gateway.ts b/src/tools/gateway.ts
+index 42fdf56..4c3519f 100644
+--- a/src/tools/gateway.ts
++++ b/src/tools/gateway.ts
+@@ -8,6 +8,7 @@ import { handleEcommerceAuditBacklinks } from "./backlink-health-tool.js";
+ import { handleEcommerceLnwshopCdpActuator } from "./lnwshop-cdp-actuator-tool.js";
+ import { handleEcommerceOutboundSeoPublisher } from "./outbound-seo-tool.js";
+ import { handleEcommerceDomTokenPruner } from "./dom-token-pruner-tool.js";
++import { handleEcommerceTopicClusterScheduler } from "./topic-cluster-scheduler-tool.js";
+ import { handleEcommerceOutboundAutoPoster } from "./outbound-auto-poster-tool.js";
+ import { handleEcommerceGoogleAdsIntegration } from "./google-ads-integration.js";
+ import { handleEcommerceAutonomousStoreManager } from "./store-agent-tool.js";
+@@ -429,6 +430,12 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
+     description: "Record and inspect audit logs",
+     handler: handleEcommerceAuditLog
+   },
++  topic_cluster_scheduler: {
++    action: "topic_cluster_scheduler",
++    category: "seo",
++    description: "Automated SEO Topic Cluster Publisher",
++    handler: handleEcommerceTopicClusterScheduler
++  },
+   extract_session: {
+     action: "extract_session",
+     category: "browser",
+diff --git a/src/tools/topic-cluster-scheduler-tool.ts b/src/tools/topic-cluster-scheduler-tool.ts
+new file mode 100644
+index 0000000..74fc60a
+--- /dev/null
++++ b/src/tools/topic-cluster-scheduler-tool.ts
+@@ -0,0 +1,31 @@
++import { TopicClusterScheduler, ScheduledArticle } from "../services/seo/topic-cluster-scheduler.js";
++
++export async function handleEcommerceTopicClusterScheduler(args: any) {
++  const { articles } = args || {};
++
++  if (!articles || !Array.isArray(articles)) {
++    return {
++      isError: true,
++      content: [{ type: "text", text: "Error: 'articles' must be provided as an array." }]
++    };
++  }
++
++  const scheduler = new TopicClusterScheduler();
++
++  try {
++    const result = scheduler.scheduleCluster(articles as ScheduledArticle[]);
++    return {
++      content: [
++        {
++          type: "text",
++          text: JSON.stringify(result, null, 2)
++        }
++      ]
++    };
++  } catch (error: any) {
++    return {
++      isError: true,
++      content: [{ type: "text", text: `Error during scheduling: ${error.message}` }]
++    };
++  }
++}

@@ -929,6 +929,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "ecommerce_topic_cluster_scheduler",
+        description: "Automated SEO Topic Cluster Publisher",
+        inputSchema: {
+          type: "object",
+          properties: {
+            articles: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  title: { type: "string" },
+                  content: { type: "string" },
+                  targetKeyword: { type: "string" },
+                  publishDate: { type: "string" }
+                },
+                required: ["id", "title", "content", "targetKeyword"]
+              }
+            }
+          },
+          required: ["articles"]
+        }
+      },
+      {
         name: "ecommerce_outbound_auto_poster",
         description: "Automated form poster for authorized Thai webboards/classifieds via CDP",
         inputSchema: {
@@ -1108,6 +1132,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceGoogleAdsIntegration(args);
     case "ecommerce_outbound_auto_poster":
       return await handleEcommerceOutboundAutoPoster(args);
+    case "ecommerce_topic_cluster_scheduler":
+      return await handleEcommerceOps({ action: "topic_cluster_scheduler", params: args });
     default:
       return {
         content: [

@@ -8,6 +8,7 @@ import { handleEcommerceAuditBacklinks } from "./backlink-health-tool.js";
 import { handleEcommerceLnwshopCdpActuator } from "./lnwshop-cdp-actuator-tool.js";
 import { handleEcommerceOutboundSeoPublisher } from "./outbound-seo-tool.js";
 import { handleEcommerceDomTokenPruner } from "./dom-token-pruner-tool.js";
+import { handleEcommerceTopicClusterScheduler } from "./topic-cluster-scheduler-tool.js";
 import { handleEcommerceOutboundAutoPoster } from "./outbound-auto-poster-tool.js";
 import { handleEcommerceGoogleAdsIntegration } from "./google-ads-integration.js";
 import { handleEcommerceAutonomousStoreManager } from "./store-agent-tool.js";
@@ -428,6 +429,12 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     category: "utility",
     description: "Record and inspect audit logs",
     handler: handleEcommerceAuditLog
+  },
+  topic_cluster_scheduler: {
+    action: "topic_cluster_scheduler",
+    category: "seo",
+    description: "Automated SEO Topic Cluster Publisher",
+    handler: handleEcommerceTopicClusterScheduler
   },
   extract_session: {
     action: "extract_session",
