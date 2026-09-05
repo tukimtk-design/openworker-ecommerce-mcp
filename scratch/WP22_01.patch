@@ -1,0 +1,605 @@
+diff --git a/src/index.ts b/src/index.ts
+index e6b329a..f47654e 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,3 +1,8 @@
++import {
++  handleEcommerceAuthorityAssetRegistry,
++  handleEcommercePublisherRelevanceFilter,
++  handleEcommerceMentionObservationLedger
++} from "./tools/authority-engine-tools.js";
+ import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
+ import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
+ import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
+@@ -979,6 +984,93 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
+           },
+           required: ["targetUrl", "title", "content", "selectors"]
+         }
++      },
++      {
++        name: "ecommerce_authority_asset_registry",
++        description: "Manage editorial downloadable checklist/tables/diagram assets",
++        inputSchema: {
++          type: "object",
++          properties: {
++            action: { type: "string", enum: ["register", "get", "list"] },
++            assetId: { type: "string" },
++            asset: {
++              type: "object",
++              properties: {
++                id: { type: "string" },
++                type: { type: "string", enum: ["checklist", "table", "diagram", "other"] },
++                title: { type: "string" },
++                content: { type: "string" },
++                metadata: {
++                  type: "object",
++                  properties: {
++                    description: { type: "string" },
++                    keywords: { type: "array", items: { type: "string" } }
++                  }
++                }
++              },
++              required: ["id", "type", "title", "content"]
++            }
++          },
++          required: ["action"]
++        }
++      },
++      {
++        name: "ecommerce_publisher_relevance_filter",
++        description: "Determine deterministic publisher relevance locally",
++        inputSchema: {
++          type: "object",
++          properties: {
++            publisherUrl: { type: "string" },
++            content: { type: "string" }
++          },
++          required: ["publisherUrl", "content"]
++        }
++      },
++      {
++        name: "ecommerce_mention_observation_ledger",
++        description: "Track brand mentions, backlinks, and correlate with drift",
++        inputSchema: {
++          type: "object",
++          properties: {
++            action: { type: "string", enum: ["record_mention", "record_backlink", "correlate_drift", "get_all"] },
++            mention: {
++              type: "object",
++              properties: {
++                id: { type: "string" },
++                brandKeyword: { type: "string" },
++                sourceUrl: { type: "string" },
++                contextSnippet: { type: "string" },
++                timestamp: { type: "string" },
++                sentiment: { type: "string", enum: ["positive", "neutral", "negative"] }
++              },
++              required: ["id", "brandKeyword", "sourceUrl", "contextSnippet", "timestamp"]
++            },
++            backlink: {
++              type: "object",
++              properties: {
++                id: { type: "string" },
++                targetUrl: { type: "string" },
++                sourceUrl: { type: "string" },
++                anchorText: { type: "string" },
++                timestamp: { type: "string" },
++                relAttribute: { type: "string" }
++              },
++              required: ["id", "targetUrl", "sourceUrl", "anchorText", "timestamp"]
++            },
++            driftData: {
++              type: "object",
++              properties: {
++                targetUrl: { type: "string" },
++                keyword: { type: "string" },
++                previousRank: { type: "number" },
++                currentRank: { type: "number" },
++                timestamp: { type: "string" }
++              },
++              required: ["targetUrl", "keyword", "previousRank", "currentRank", "timestamp"]
++            }
++          },
++          required: ["action"]
++        }
+       }
+     ],
+   };
+@@ -1134,6 +1226,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
+       return await handleEcommerceOutboundAutoPoster(args);
+     case "ecommerce_topic_cluster_scheduler":
+       return await handleEcommerceOps({ action: "topic_cluster_scheduler", params: args });
++
++    case "ecommerce_authority_asset_registry":
++      return await handleEcommerceAuthorityAssetRegistry(args);
++    case "ecommerce_publisher_relevance_filter":
++      return await handleEcommercePublisherRelevanceFilter(args);
++    case "ecommerce_mention_observation_ledger":
++      return await handleEcommerceMentionObservationLedger(args);
++
+     default:
+       return {
+         content: [
+diff --git a/src/services/seo/authority-asset-registry.ts b/src/services/seo/authority-asset-registry.ts
+new file mode 100644
+index 0000000..a4ad144
+--- /dev/null
++++ b/src/services/seo/authority-asset-registry.ts
+@@ -0,0 +1,54 @@
++import { SeoPolicyGuard } from "./seo-policy-guard.js";
++
++export interface AuthorityAssetMetadata {
++  description?: string;
++  keywords?: string[];
++  [key: string]: any;
++}
++
++export interface AuthorityAsset {
++  id: string;
++  type: "checklist" | "table" | "diagram" | "other";
++  title: string;
++  content: string; // url or text content
++  metadata: AuthorityAssetMetadata;
++}
++
++export class AuthorityAssetRegistry {
++  private assets: Map<string, AuthorityAsset> = new Map();
++
++  public registerAsset(asset: AuthorityAsset): void {
++    // 1. Validate content and title with SeoPolicyGuard for negative keywords
++    // We combine title, content (if it's text) and keywords for validation
++    let textToValidate = asset.title;
++    if (asset.metadata?.description) {
++      textToValidate += " " + asset.metadata.description;
++    }
++    if (asset.metadata?.keywords && asset.metadata.keywords.length > 0) {
++      textToValidate += " " + asset.metadata.keywords.join(" ");
++    }
++    if (asset.content) {
++      textToValidate += " " + asset.content;
++    }
++
++    const guardResult = SeoPolicyGuard.checkPolicy({ text: textToValidate });
++    if (!guardResult.isSafe) {
++      throw new Error(`SeoPolicyGuard violation: Rejected keywords found in asset [${asset.id}]: ${guardResult.rejectedKeywords.join(", ")}`);
++    }
++
++    // 2. Store asset
++    this.assets.set(asset.id, asset);
++  }
++
++  public getAsset(id: string): AuthorityAsset | undefined {
++    return this.assets.get(id);
++  }
++
++  public listAssets(): AuthorityAsset[] {
++    return Array.from(this.assets.values());
++  }
++
++  public clear(): void {
++    this.assets.clear();
++  }
++}
+diff --git a/src/services/seo/mention-observation-ledger.ts b/src/services/seo/mention-observation-ledger.ts
+new file mode 100644
+index 0000000..d52a88e
+--- /dev/null
++++ b/src/services/seo/mention-observation-ledger.ts
+@@ -0,0 +1,99 @@
++export interface BrandMention {
++  id: string;
++  brandKeyword: string;
++  sourceUrl: string;
++  contextSnippet: string;
++  timestamp: string; // ISO string
++  sentiment?: "positive" | "neutral" | "negative";
++}
++
++export interface EarnedBacklink {
++  id: string;
++  targetUrl: string; // URL on our domain
++  sourceUrl: string; // URL of the backlink
++  anchorText: string;
++  timestamp: string;
++  relAttribute?: string; // e.g., 'nofollow', 'dofollow'
++}
++
++export interface DriftData {
++  targetUrl: string;
++  keyword: string;
++  previousRank: number;
++  currentRank: number;
++  timestamp: string;
++}
++
++export interface CorrelationResult {
++  targetUrl: string;
++  keyword: string;
++  rankChange: number;
++  mentionsCount: number;
++  backlinksCount: number;
++  correlationSignal: "strong" | "weak" | "none";
++}
++
++export class MentionObservationLedger {
++  private mentions: Map<string, BrandMention> = new Map();
++  private backlinks: Map<string, EarnedBacklink> = new Map();
++
++  public recordMention(mention: BrandMention): void {
++    this.mentions.set(mention.id, mention);
++  }
++
++  public recordBacklink(backlink: EarnedBacklink): void {
++    this.backlinks.set(backlink.id, backlink);
++  }
++
++  public getMentions(): BrandMention[] {
++    return Array.from(this.mentions.values());
++  }
++
++  public getBacklinks(): EarnedBacklink[] {
++    return Array.from(this.backlinks.values());
++  }
++
++  public correlateDrift(driftData: DriftData): CorrelationResult {
++    const rankChange = driftData.previousRank - driftData.currentRank; // Positive means rank improved (e.g., 10 to 5)
++    
++    // Find relevant mentions (e.g., matching the keyword)
++    const relatedMentions = Array.from(this.mentions.values()).filter(m => 
++      m.brandKeyword.toLowerCase().includes(driftData.keyword.toLowerCase()) || 
++      driftData.keyword.toLowerCase().includes(m.brandKeyword.toLowerCase())
++    );
++
++    // Find relevant backlinks (e.g., matching the target URL)
++    const relatedBacklinks = Array.from(this.backlinks.values()).filter(b => 
++      b.targetUrl === driftData.targetUrl || 
++      b.anchorText.toLowerCase().includes(driftData.keyword.toLowerCase())
++    );
++
++    let signal: "strong" | "weak" | "none" = "none";
++    if (rankChange > 0) {
++       if (relatedMentions.length > 2 || relatedBacklinks.length > 1) {
++           signal = "strong";
++       } else if (relatedMentions.length > 0 || relatedBacklinks.length > 0) {
++           signal = "weak";
++       }
++    } else if (rankChange < 0) {
++       // Negative rank change could also be correlated if there are negative sentiment mentions, but for now just general correlation.
++       if (relatedMentions.some(m => m.sentiment === 'negative')) {
++           signal = "strong";
++       }
++    }
++
++    return {
++      targetUrl: driftData.targetUrl,
++      keyword: driftData.keyword,
++      rankChange: rankChange,
++      mentionsCount: relatedMentions.length,
++      backlinksCount: relatedBacklinks.length,
++      correlationSignal: signal
++    };
++  }
++
++  public clear(): void {
++    this.mentions.clear();
++    this.backlinks.clear();
++  }
++}
+diff --git a/src/services/seo/publisher-relevance-filter.ts b/src/services/seo/publisher-relevance-filter.ts
+new file mode 100644
+index 0000000..cb08fb3
+--- /dev/null
++++ b/src/services/seo/publisher-relevance-filter.ts
+@@ -0,0 +1,62 @@
++export type RelevanceStatus = 'RELEVANT' | 'UNCERTAIN' | 'EXCLUDED';
++
++export interface PublisherRelevanceResult {
++  status: RelevanceStatus;
++  score: number;
++  matchedKeywords: string[];
++  reason: string;
++}
++
++export class PublisherRelevanceFilter {
++  // Configurable rules
++  private excludeKeywords: string[] = ["สแปม", "การพนัน", "คาสิโน", "หวย", "ผิดกฎหมาย", "18+", "แทงบอล"];
++  private relevantKeywords: string[] = ["รีวิว", "แนะนำ", "ราคา", "โปรโมชั่น", "ช้อปปิ้ง", "สินค้า", "คุณภาพ", "วิธีใช้"];
++
++  constructor(
++    customExcludeKeywords?: string[],
++    customRelevantKeywords?: string[]
++  ) {
++    if (customExcludeKeywords) {
++      this.excludeKeywords = customExcludeKeywords;
++    }
++    if (customRelevantKeywords) {
++      this.relevantKeywords = customRelevantKeywords;
++    }
++  }
++
++  public evaluateRelevance(publisherUrl: string, content: string): PublisherRelevanceResult {
++    const text = (publisherUrl + " " + content).toLowerCase();
++    
++    // 1. Check EXCLUDED deterministic rules first
++    const excludedMatches = this.excludeKeywords.filter(kw => text.includes(kw.toLowerCase()));
++    if (excludedMatches.length > 0) {
++      return {
++        status: 'EXCLUDED',
++        score: -1,
++        matchedKeywords: excludedMatches,
++        reason: `Found excluded keywords: ${excludedMatches.join(', ')}`
++      };
++    }
++
++    // 2. Check RELEVANT rules (scoring based on hits)
++    const relevantMatches = this.relevantKeywords.filter(kw => text.includes(kw.toLowerCase()));
++    
++    // Threshold for automatic relevance
++    if (relevantMatches.length >= 2) {
++      return {
++        status: 'RELEVANT',
++        score: relevantMatches.length,
++        matchedKeywords: relevantMatches,
++        reason: `Found sufficient relevant keywords: ${relevantMatches.join(', ')}`
++      };
++    }
++
++    // 3. Fallback to UNCERTAIN for LLM or human review
++    return {
++      status: 'UNCERTAIN',
++      score: relevantMatches.length,
++      matchedKeywords: relevantMatches,
++      reason: `Insufficient keywords to determine relevance deterministically.`
++    };
++  }
++}
+diff --git a/src/tools/authority-engine-tools.ts b/src/tools/authority-engine-tools.ts
+new file mode 100644
+index 0000000..f58c79e
+--- /dev/null
++++ b/src/tools/authority-engine-tools.ts
+@@ -0,0 +1,104 @@
++import { AuthorityAssetRegistry, AuthorityAsset } from "../services/seo/authority-asset-registry.js";
++import { PublisherRelevanceFilter } from "../services/seo/publisher-relevance-filter.js";
++import { MentionObservationLedger, BrandMention, EarnedBacklink, DriftData } from "../services/seo/mention-observation-ledger.js";
++
++const assetRegistry = new AuthorityAssetRegistry();
++const relevanceFilter = new PublisherRelevanceFilter();
++const observationLedger = new MentionObservationLedger();
++
++export async function handleEcommerceAuthorityAssetRegistry(args: any): Promise<any> {
++  const { action, asset, assetId } = args;
++
++  try {
++    if (action === 'register') {
++      if (!asset) {
++        return { isError: true, content: [{ type: "text", text: "Missing 'asset' for registration." }] };
++      }
++      assetRegistry.registerAsset(asset as AuthorityAsset);
++      return {
++        content: [{ type: "text", text: JSON.stringify({ status: "success", message: `Asset ${asset.id} registered successfully.` }) }]
++      };
++    } else if (action === 'get') {
++      if (!assetId) {
++        return { isError: true, content: [{ type: "text", text: "Missing 'assetId' to get asset." }] };
++      }
++      const retrievedAsset = assetRegistry.getAsset(assetId);
++      if (!retrievedAsset) {
++        return { isError: true, content: [{ type: "text", text: `Asset ${assetId} not found.` }] };
++      }
++      return {
++        content: [{ type: "text", text: JSON.stringify({ status: "success", asset: retrievedAsset }) }]
++      };
++    } else if (action === 'list') {
++      const assets = assetRegistry.listAssets();
++      return {
++        content: [{ type: "text", text: JSON.stringify({ status: "success", assets }) }]
++      };
++    } else {
++      return { isError: true, content: [{ type: "text", text: `Unknown action: ${action}` }] };
++    }
++  } catch (error: any) {
++    return { isError: true, content: [{ type: "text", text: error.message }] };
++  }
++}
++
++export async function handleEcommercePublisherRelevanceFilter(args: any): Promise<any> {
++  const { publisherUrl, content } = args;
++
++  if (!publisherUrl || !content) {
++    return { isError: true, content: [{ type: "text", text: "Missing 'publisherUrl' or 'content' for evaluation." }] };
++  }
++
++  try {
++    const result = relevanceFilter.evaluateRelevance(publisherUrl, content);
++    return {
++      content: [{ type: "text", text: JSON.stringify({ status: "success", result }) }]
++    };
++  } catch (error: any) {
++    return { isError: true, content: [{ type: "text", text: error.message }] };
++  }
++}
++
++export async function handleEcommerceMentionObservationLedger(args: any): Promise<any> {
++  const { action, mention, backlink, driftData } = args;
++
++  try {
++    if (action === 'record_mention') {
++      if (!mention) {
++        return { isError: true, content: [{ type: "text", text: "Missing 'mention' data." }] };
++      }
++      observationLedger.recordMention(mention as BrandMention);
++      return {
++        content: [{ type: "text", text: JSON.stringify({ status: "success", message: `Mention ${mention.id} recorded.` }) }]
++      };
++    } else if (action === 'record_backlink') {
++      if (!backlink) {
++        return { isError: true, content: [{ type: "text", text: "Missing 'backlink' data." }] };
++      }
++      observationLedger.recordBacklink(backlink as EarnedBacklink);
++      return {
++        content: [{ type: "text", text: JSON.stringify({ status: "success", message: `Backlink ${backlink.id} recorded.` }) }]
++      };
++    } else if (action === 'correlate_drift') {
++      if (!driftData) {
++        return { isError: true, content: [{ type: "text", text: "Missing 'driftData' for correlation." }] };
++      }
++      const correlation = observationLedger.correlateDrift(driftData as DriftData);
++      return {
++        content: [{ type: "text", text: JSON.stringify({ status: "success", correlation }) }]
++      };
++    } else if (action === 'get_all') {
++      return {
++        content: [{ type: "text", text: JSON.stringify({
++            status: "success",
++            mentions: observationLedger.getMentions(),
++            backlinks: observationLedger.getBacklinks()
++        }) }]
++      };
++    } else {
++      return { isError: true, content: [{ type: "text", text: `Unknown action: ${action}` }] };
++    }
++  } catch (error: any) {
++    return { isError: true, content: [{ type: "text", text: error.message }] };
++  }
++}
+diff --git a/src/tools/gateway.ts b/src/tools/gateway.ts
+index 4c3519f..c054d71 100644
+--- a/src/tools/gateway.ts
++++ b/src/tools/gateway.ts
+@@ -57,6 +57,11 @@ import {
+   handleEcommerceLnwstorePublishBlog,
+   handleEcommerceLnwstoreInjectSchema
+ } from "./lnwstore-fast-actuator-tool.js";
++import {
++  handleEcommerceAuthorityAssetRegistry,
++  handleEcommercePublisherRelevanceFilter,
++  handleEcommerceMentionObservationLedger
++} from "./authority-engine-tools.js";
+ 
+ export interface ActionDefinition {
+   action: string;
+@@ -66,6 +71,24 @@ export interface ActionDefinition {
+ }
+ 
+ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
++  authority_asset_registry: {
++    action: "authority_asset_registry",
++    category: "seo",
++    description: "Manage editorial downloadable checklist/tables/diagram assets",
++    handler: handleEcommerceAuthorityAssetRegistry
++  },
++  publisher_relevance_filter: {
++    action: "publisher_relevance_filter",
++    category: "seo",
++    description: "Determine deterministic publisher relevance locally",
++    handler: handleEcommercePublisherRelevanceFilter
++  },
++  mention_observation_ledger: {
++    action: "mention_observation_ledger",
++    category: "seo",
++    description: "Track brand mentions, backlinks, and correlate with drift",
++    handler: handleEcommerceMentionObservationLedger
++  },
+   list_actions: {
+     action: "list_actions",
+     category: "system",
+diff --git a/tests/phase22-authority-engine.test.ts b/tests/phase22-authority-engine.test.ts
+new file mode 100644
+index 0000000..75b9143
+--- /dev/null
++++ b/tests/phase22-authority-engine.test.ts
+@@ -0,0 +1,93 @@
++import test from 'node:test';
++import assert from 'node:assert';
++import { AuthorityAssetRegistry, AuthorityAsset } from '../services/seo/authority-asset-registry.js';
++import { PublisherRelevanceFilter } from '../services/seo/publisher-relevance-filter.js';
++import { MentionObservationLedger, BrandMention, EarnedBacklink, DriftData } from '../services/seo/mention-observation-ledger.js';
++
++test('AuthorityAssetRegistry', async (t) => {
++  await t.test('registerAsset should store asset successfully if no negative keywords', () => {
++    const registry = new AuthorityAssetRegistry();
++    const asset: AuthorityAsset = {
++      id: 'asset-1',
++      type: 'checklist',
++      title: 'SEO Checklist',
++      content: 'Good content here',
++      metadata: { keywords: ['seo', 'checklist'] }
++    };
++    registry.registerAsset(asset);
++    assert.strictEqual(registry.getAsset('asset-1')?.id, 'asset-1');
++  });
++
++  await t.test('registerAsset should throw Error if negative keywords found', () => {
++    const registry = new AuthorityAssetRegistry();
++    const asset: AuthorityAsset = {
++      id: 'asset-2',
++      type: 'checklist',
++      title: 'มือสอง SEO Checklist', // "มือสอง" is a negative keyword
++      content: 'Some content',
++      metadata: { keywords: ['seo'] }
++    };
++    assert.throws(() => registry.registerAsset(asset), /SeoPolicyGuard violation/);
++  });
++});
++
++test('PublisherRelevanceFilter', async (t) => {
++  const filter = new PublisherRelevanceFilter();
++
++  await t.test('evaluateRelevance should return EXCLUDED for negative keywords', () => {
++    const result = filter.evaluateRelevance('http://example.com/casino', 'เว็บ คาสิโน ออนไลน์'); // "คาสิโน" is excluded
++    assert.strictEqual(result.status, 'EXCLUDED');
++  });
++
++  await t.test('evaluateRelevance should return RELEVANT for 2 or more relevant keywords', () => {
++    const result = filter.evaluateRelevance('http://example.com/review', 'รีวิว สินค้า ดีมาก แนะนำ เลยครับ'); // "รีวิว", "สินค้า", "แนะนำ"
++    assert.strictEqual(result.status, 'RELEVANT');
++    assert.ok(result.score >= 2);
++  });
++
++  await t.test('evaluateRelevance should return UNCERTAIN for 1 relevant keyword', () => {
++    const result = filter.evaluateRelevance('http://example.com/blog', 'วันนี้มา รีวิว กล้องใหม่'); // Only "รีวิว"
++    assert.strictEqual(result.status, 'UNCERTAIN');
++  });
++});
++
++test('MentionObservationLedger', async (t) => {
++  await t.test('correlateDrift should return strong correlation for multiple mentions', () => {
++    const ledger = new MentionObservationLedger();
++    
++    // Add mentions
++    ledger.recordMention({
++      id: 'm1', brandKeyword: 'MyBrand', sourceUrl: 'a.com', contextSnippet: 'good', timestamp: '2023-10-01'
++    });
++    ledger.recordMention({
++      id: 'm2', brandKeyword: 'MyBrand', sourceUrl: 'b.com', contextSnippet: 'nice', timestamp: '2023-10-02'
++    });
++    ledger.recordMention({
++      id: 'm3', brandKeyword: 'MyBrand', sourceUrl: 'c.com', contextSnippet: 'great', timestamp: '2023-10-03'
++    });
++
++    const drift: DriftData = {
++      targetUrl: 'mybrand.com', keyword: 'MyBrand', previousRank: 10, currentRank: 5, timestamp: '2023-10-04'
++    };
++
++    const correlation = ledger.correlateDrift(drift);
++    assert.strictEqual(correlation.correlationSignal, 'strong');
++    assert.strictEqual(correlation.mentionsCount, 3);
++  });
++
++  await t.test('correlateDrift should return weak correlation for single mention', () => {
++    const ledger = new MentionObservationLedger();
++    
++    ledger.recordMention({
++      id: 'm1', brandKeyword: 'MyBrand', sourceUrl: 'a.com', contextSnippet: 'good', timestamp: '2023-10-01'
++    });
++
++    const drift: DriftData = {
++      targetUrl: 'mybrand.com', keyword: 'MyBrand', previousRank: 10, currentRank: 5, timestamp: '2023-10-04'
++    };
++
++    const correlation = ledger.correlateDrift(drift);
++    assert.strictEqual(correlation.correlationSignal, 'weak');
++    assert.strictEqual(correlation.mentionsCount, 1);
++  });
++});

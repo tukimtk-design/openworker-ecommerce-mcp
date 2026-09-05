@@ -57,6 +57,11 @@ import {
   handleEcommerceLnwstorePublishBlog,
   handleEcommerceLnwstoreInjectSchema
 } from "./lnwstore-fast-actuator-tool.js";
+import {
+  handleEcommerceAuthorityAssetRegistry,
+  handleEcommercePublisherRelevanceFilter,
+  handleEcommerceMentionObservationLedger
+} from "./authority-engine-tools.js";
 
 export interface ActionDefinition {
   action: string;
@@ -66,6 +71,24 @@ export interface ActionDefinition {
 }
 
 export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
+  authority_asset_registry: {
+    action: "authority_asset_registry",
+    category: "seo",
+    description: "Manage editorial downloadable checklist/tables/diagram assets",
+    handler: handleEcommerceAuthorityAssetRegistry
+  },
+  publisher_relevance_filter: {
+    action: "publisher_relevance_filter",
+    category: "seo",
+    description: "Determine deterministic publisher relevance locally",
+    handler: handleEcommercePublisherRelevanceFilter
+  },
+  mention_observation_ledger: {
+    action: "mention_observation_ledger",
+    category: "seo",
+    description: "Track brand mentions, backlinks, and correlate with drift",
+    handler: handleEcommerceMentionObservationLedger
+  },
   list_actions: {
     action: "list_actions",
     category: "system",

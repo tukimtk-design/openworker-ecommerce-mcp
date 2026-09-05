@@ -1,3 +1,8 @@
+import {
+  handleEcommerceAuthorityAssetRegistry,
+  handleEcommercePublisherRelevanceFilter,
+  handleEcommerceMentionObservationLedger
+} from "./tools/authority-engine-tools.js";
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
@@ -979,6 +984,93 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["targetUrl", "title", "content", "selectors"]
         }
+      },
+      {
+        name: "ecommerce_authority_asset_registry",
+        description: "Manage editorial downloadable checklist/tables/diagram assets",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["register", "get", "list"] },
+            assetId: { type: "string" },
+            asset: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                type: { type: "string", enum: ["checklist", "table", "diagram", "other"] },
+                title: { type: "string" },
+                content: { type: "string" },
+                metadata: {
+                  type: "object",
+                  properties: {
+                    description: { type: "string" },
+                    keywords: { type: "array", items: { type: "string" } }
+                  }
+                }
+              },
+              required: ["id", "type", "title", "content"]
+            }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_publisher_relevance_filter",
+        description: "Determine deterministic publisher relevance locally",
+        inputSchema: {
+          type: "object",
+          properties: {
+            publisherUrl: { type: "string" },
+            content: { type: "string" }
+          },
+          required: ["publisherUrl", "content"]
+        }
+      },
+      {
+        name: "ecommerce_mention_observation_ledger",
+        description: "Track brand mentions, backlinks, and correlate with drift",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["record_mention", "record_backlink", "correlate_drift", "get_all"] },
+            mention: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                brandKeyword: { type: "string" },
+                sourceUrl: { type: "string" },
+                contextSnippet: { type: "string" },
+                timestamp: { type: "string" },
+                sentiment: { type: "string", enum: ["positive", "neutral", "negative"] }
+              },
+              required: ["id", "brandKeyword", "sourceUrl", "contextSnippet", "timestamp"]
+            },
+            backlink: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                targetUrl: { type: "string" },
+                sourceUrl: { type: "string" },
+                anchorText: { type: "string" },
+                timestamp: { type: "string" },
+                relAttribute: { type: "string" }
+              },
+              required: ["id", "targetUrl", "sourceUrl", "anchorText", "timestamp"]
+            },
+            driftData: {
+              type: "object",
+              properties: {
+                targetUrl: { type: "string" },
+                keyword: { type: "string" },
+                previousRank: { type: "number" },
+                currentRank: { type: "number" },
+                timestamp: { type: "string" }
+              },
+              required: ["targetUrl", "keyword", "previousRank", "currentRank", "timestamp"]
+            }
+          },
+          required: ["action"]
+        }
       }
     ],
   };
@@ -1134,6 +1226,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommerceOutboundAutoPoster(args);
     case "ecommerce_topic_cluster_scheduler":
       return await handleEcommerceOps({ action: "topic_cluster_scheduler", params: args });
+
+    case "ecommerce_authority_asset_registry":
+      return await handleEcommerceAuthorityAssetRegistry(args);
+    case "ecommerce_publisher_relevance_filter":
+      return await handleEcommercePublisherRelevanceFilter(args);
+    case "ecommerce_mention_observation_ledger":
+      return await handleEcommerceMentionObservationLedger(args);
+
     default:
       return {
         content: [
