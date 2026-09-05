@@ -4,6 +4,7 @@ import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./lnwshop-seo-updater.js
 import { handleEcommerceSeoContentEnricher } from "./seo-content-enricher-tool.js";
 import { handleEcommerceSiteAuditCrawler } from "./site-audit-crawler-tool.js";
 import { handleEcommerceLiveSerpScraper } from "./live-serp-scraper-tool.js";
+import { handleEcommerceAuditBacklinks } from "./backlink-health-tool.js";
 import { handleEcommerceLnwshopCdpActuator } from "./lnwshop-cdp-actuator-tool.js";
 import { handleEcommerceOutboundSeoPublisher } from "./outbound-seo-tool.js";
 import { handleEcommerceDomTokenPruner } from "./dom-token-pruner-tool.js";
@@ -29,6 +30,8 @@ import { handleBrowserDetectChallenge } from "./browser-challenge.js";
 import { handleEcommerceGetStoreMetrics } from "./store-metrics.js";
 import { handleEcommerceBatchUpdatePriceStock } from "./batch-update.js";
 import { handleEcommerceAuditLog } from "./audit-log.js";
+import { handleEcommerceWeaveArticleCluster } from "./article-cluster-weaver-tool.js";
+import { handleEcommerceTrackRankDrift } from "./serp-rank-drift-tool.js";
 import { handleEcommerceProductSearch } from "./ecommerce-search.js";
 import { handleEcommerceUpdatePriceStock } from "./ecommerce-update.js";
 import { handleEcommerceSafetyGuard } from "./safety-guard.js";
@@ -48,6 +51,11 @@ import { handleEcommerceActuatorRouter } from "./actuator-tool.js";
 import { handleEcommerceSupplierBridge } from "./supplier-tool.js";
 import { handleEcommerceListingAbTest } from "./ab-test-tool.js";
 import { handleEcommerceSerpRankTracker } from "./serp-rank-tracker-tool.js";
+import {
+  handleEcommerceLnwstoreUpdateCategory,
+  handleEcommerceLnwstorePublishBlog,
+  handleEcommerceLnwstoreInjectSchema
+} from "./lnwstore-fast-actuator-tool.js";
 
 export interface ActionDefinition {
   action: string;
@@ -73,11 +81,41 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     }
   },
   // Phase 16 Tools
+  ecommerce_weave_article_cluster: {
+    action: "ecommerce_weave_article_cluster",
+    category: "seo",
+    description: "Weave pillar-cluster contextual internal link structures across content",
+    handler: handleEcommerceWeaveArticleCluster
+  },
+  lnwstore_update_category: {
+    action: "lnwstore_update_category",
+    category: "actuator",
+    description: "Fast-path update LnwStore category SEO title, description, and keywords",
+    handler: handleEcommerceLnwstoreUpdateCategory
+  },
+  lnwstore_publish_blog: {
+    action: "lnwstore_publish_blog",
+    category: "actuator",
+    description: "Fast-path publish blog articles directly to LnwStore",
+    handler: handleEcommerceLnwstorePublishBlog
+  },
+  lnwstore_inject_schema: {
+    action: "lnwstore_inject_schema",
+    category: "actuator",
+    description: "Fast-path inject JSON-LD structured data into LnwStore",
+    handler: handleEcommerceLnwstoreInjectSchema
+  },
   serp_rank_tracker: {
     action: "serp_rank_tracker",
     category: "seo",
     description: "Track Google SERP rank and striking distance keywords",
     handler: handleEcommerceSerpRankTracker
+  },
+  ecommerce_track_rank_drift: {
+    action: "ecommerce_track_rank_drift",
+    category: "seo",
+    description: "Track SERP rank drift and detect keyword cannibalization",
+    handler: handleEcommerceTrackRankDrift
   },
   seo_content_enricher: {
     action: "seo_content_enricher",
@@ -90,6 +128,12 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     category: "seo",
     description: "Audit site DOM, schema markup, and metadata",
     handler: handleEcommerceSiteAuditCrawler
+  },
+  ecommerce_audit_backlinks: {
+    action: "ecommerce_audit_backlinks",
+    category: "seo",
+    description: "Audit health and indexation status of outbound backlinks",
+    handler: handleEcommerceAuditBacklinks
   },
   live_serp_scraper: {
     action: "live_serp_scraper",
