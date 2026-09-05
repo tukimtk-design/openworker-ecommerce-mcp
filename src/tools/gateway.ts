@@ -33,6 +33,7 @@ import { handleEcommerceBatchUpdatePriceStock } from "./batch-update.js";
 import { handleEcommerceAuditLog } from "./audit-log.js";
 import { handleEcommerceWeaveArticleCluster } from "./article-cluster-weaver-tool.js";
 import { handleEcommerceTrackRankDrift } from "./serp-rank-drift-tool.js";
+import { handleEcommerceSeoControlTower, handleEcommerceSeoChangeOrchestrator } from "./seo-control-tower-tools.js";
 import { handleEcommerceProductSearch } from "./ecommerce-search.js";
 import { handleEcommerceUpdatePriceStock } from "./ecommerce-update.js";
 import { handleEcommerceSafetyGuard } from "./safety-guard.js";
@@ -88,6 +89,18 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     category: "seo",
     description: "Track brand mentions, backlinks, and correlate with drift",
     handler: handleEcommerceMentionObservationLedger
+  },
+  seo_control_tower: {
+    action: "seo_control_tower",
+    category: "seo",
+    description: "SEO Evidence Control Tower & Authorized Change Orchestrator",
+    handler: handleEcommerceSeoControlTower
+  },
+  seo_change_orchestrator: {
+    action: "seo_change_orchestrator",
+    category: "seo",
+    description: "Orchestrate exact SEO changes with policy enforcement",
+    handler: handleEcommerceSeoChangeOrchestrator
   },
   list_actions: {
     action: "list_actions",

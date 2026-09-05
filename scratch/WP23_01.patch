@@ -1,0 +1,515 @@
+diff --git a/src/index.ts b/src/index.ts
+index f47654e..bf56303 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -3,6 +3,7 @@ import {
+   handleEcommercePublisherRelevanceFilter,
+   handleEcommerceMentionObservationLedger
+ } from "./tools/authority-engine-tools.js";
++import { handleEcommerceSeoControlTower, handleEcommerceSeoChangeOrchestrator } from "./tools/seo-control-tower-tools.js";
+ import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
+ import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
+ import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
+@@ -1071,6 +1072,65 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
+           },
+           required: ["action"]
+         }
++      },
++      {
++        name: "ecommerce_seo_control_tower",
++        description: "SEO Evidence Control Tower & Authorized Change Orchestrator",
++        inputSchema: {
++          type: "object",
++          properties: {
++            action: { type: "string", enum: ["record_observation", "generate_basket", "clear_cache"] },
++            observation: {
++              type: "object",
++              properties: {
++                id: { type: "string" },
++                keyword: { type: "string" },
++                rank: { type: "number" },
++                clicks: { type: "number" },
++                impressions: { type: "number" },
++                semanticSignature: { type: "string" },
++                timestamp: { type: "string" }
++              },
++              required: ["id", "keyword", "rank", "clicks", "impressions", "semanticSignature", "timestamp"]
++            },
++            recommendations: {
++              type: "array",
++              items: {
++                type: "object",
++                properties: {
++                  id: { type: "string" },
++                  action: { type: "string" },
++                  keyword: { type: "string" },
++                  expectedImpact: { type: "string" }
++                },
++                required: ["id", "action", "keyword", "expectedImpact"]
++              }
++            },
++            limit: { type: "number" }
++          },
++          required: ["action"]
++        }
++      },
++      {
++        name: "ecommerce_seo_change_orchestrator",
++        description: "Orchestrate exact SEO changes with policy enforcement",
++        inputSchema: {
++          type: "object",
++          properties: {
++            request: {
++              type: "object",
++              properties: {
++                id: { type: "string" },
++                targetId: { type: "string" },
++                beforeContent: { type: "string" },
++                afterContent: { type: "string" },
++                timestamp: { type: "number" }
++              },
++              required: ["id", "targetId", "beforeContent", "afterContent", "timestamp"]
++            }
++          },
++          required: ["request"]
++        }
+       }
+     ],
+   };
+@@ -1233,6 +1293,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
+       return await handleEcommercePublisherRelevanceFilter(args);
+     case "ecommerce_mention_observation_ledger":
+       return await handleEcommerceMentionObservationLedger(args);
++    case "ecommerce_seo_control_tower":
++      return await handleEcommerceSeoControlTower(args);
++    case "ecommerce_seo_change_orchestrator":
++      return await handleEcommerceSeoChangeOrchestrator(args);
+ 
+     default:
+       return {
+diff --git a/src/services/seo/seo-change-orchestrator.ts b/src/services/seo/seo-change-orchestrator.ts
+new file mode 100644
+index 0000000..2511778
+--- /dev/null
++++ b/src/services/seo/seo-change-orchestrator.ts
+@@ -0,0 +1,75 @@
++import { SeoPolicyGuard } from "./seo-policy-guard.js";
++import crypto from "crypto";
++
++export interface ChangeRequest {
++  id: string;
++  targetId: string; // Product or page ID
++  beforeContent: string;
++  afterContent: string;
++  timestamp: number;
++}
++
++export interface ChangeResult {
++  success: boolean;
++  fingerprint?: string;
++  reason?: string;
++  rejectedKeywords?: string[];
++}
++
++export class SeoChangeOrchestrator {
++  // targetId -> timestamp of last change
++  private cooldownRegistry: Map<string, number> = new Map();
++  private readonly COOLDOWN_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 hours
++
++  /**
++   * Prepares and hashes the before/after diff to create a unique fingerprint.
++   * @param request The change request
++   * @returns The fingerprint hash
++   */
++  public generateFingerprint(request: ChangeRequest): string {
++    const diffContent = `BEFORE:${request.beforeContent}|AFTER:${request.afterContent}`;
++    return crypto.createHash("sha256").update(diffContent).digest("hex");
++  }
++
++  /**
++   * Orchestrates an SEO change, enforcing policy and cooldown validations.
++   * @param request The change request
++   * @returns The result of the change execution
++   */
++  public executeChange(request: ChangeRequest): ChangeResult {
++    // 1. Cooldown Validation Enforcement
++    const lastChangeTime = this.cooldownRegistry.get(request.targetId);
++    if (lastChangeTime && (request.timestamp - lastChangeTime < this.COOLDOWN_PERIOD_MS)) {
++      return {
++        success: false,
++        reason: "Cooldown period has not elapsed for this target."
++      };
++    }
++
++    // 2. Strict SeoPolicyGuard.checkPolicy Validation
++    const policyResult = SeoPolicyGuard.checkPolicy({ text: request.afterContent });
++    if (!policyResult.isSafe) {
++      return {
++        success: false,
++        reason: policyResult.reason || "Policy validation failed.",
++        rejectedKeywords: policyResult.rejectedKeywords
++      };
++    }
++
++    // 3. Exact before/after diff preparation & fingerprint hashing
++    const fingerprint = this.generateFingerprint(request);
++
++    // 4. Update Cooldown Registry (Mock Execution)
++    this.cooldownRegistry.set(request.targetId, request.timestamp);
++
++    return {
++      success: true,
++      fingerprint,
++      reason: "Change successfully orchestrated."
++    };
++  }
++  
++  public resetCooldowns(): void {
++      this.cooldownRegistry.clear();
++  }
++}
+diff --git a/src/services/seo/seo-control-tower.ts b/src/services/seo/seo-control-tower.ts
+new file mode 100644
+index 0000000..6c76c8f
+--- /dev/null
++++ b/src/services/seo/seo-control-tower.ts
+@@ -0,0 +1,89 @@
++export interface Observation {
++  id: string;
++  keyword: string;
++  rank: number;
++  clicks: number;
++  impressions: number;
++  semanticSignature: string;
++  timestamp: string;
++}
++
++export interface Delta {
++  keyword: string;
++  rankDelta: number;
++  clicksDelta: number;
++  semanticChange: boolean;
++}
++
++export interface Recommendation {
++  id: string;
++  action: string;
++  keyword: string;
++  expectedImpact: string;
++}
++
++export class SeoControlTower {
++  private observationCache: Map<string, Observation> = new Map();
++  public llmCallCount: number = 0;
++
++  /**
++   * Records a new observation from Search Console and detects delta.
++   * @param newObs The new observation
++   * @returns Delta detection result
++   */
++  public recordObservation(newObs: Observation): Delta {
++    const prevObs = this.observationCache.get(newObs.id);
++    
++    let semanticChange = false;
++    let rankDelta = 0;
++    let clicksDelta = 0;
++
++    if (prevObs) {
++      rankDelta = prevObs.rank - newObs.rank; // Positive means rank improved (e.g. 5 -> 3, delta = 2)
++      clicksDelta = newObs.clicks - prevObs.clicks;
++      
++      // Deterministic semantic delta filter
++      if (prevObs.semanticSignature !== newObs.semanticSignature) {
++        semanticChange = true;
++      }
++    } else {
++      semanticChange = true; // First time seeing this observation
++    }
++
++    if (semanticChange) {
++      // Analyze semantic change (requires LLM)
++      this.llmCallCount++;
++    } else {
++      // If NO_SEMANTIC_CHANGE, llmCallCount is not incremented (deterministic filter)
++    }
++
++    this.observationCache.set(newObs.id, newObs);
++
++    return {
++      keyword: newObs.keyword,
++      rankDelta,
++      clicksDelta,
++      semanticChange
++    };
++  }
++
++  /**
++   * Generates a daily decision basket.
++   * Limits to top 3-5 actionable recommendations.
++   * @param recommendations Raw list of recommendations
++   * @param limit Limit for the basket (default 5, min 3, max 5)
++   * @returns Filtered list of top recommendations
++   */
++  public generateDailyDecisionBasket(recommendations: Recommendation[], limit: number = 5): Recommendation[] {
++    const finalLimit = Math.max(3, Math.min(5, limit)); // Enforce 3-5 limit
++    return recommendations.slice(0, finalLimit);
++  }
++
++  /**
++   * Clears the observation cache.
++   */
++  public clearCache(): void {
++    this.observationCache.clear();
++    this.llmCallCount = 0;
++  }
++}
+diff --git a/src/tests/phase23-control-tower.test.ts b/src/tests/phase23-control-tower.test.ts
+new file mode 100644
+index 0000000..b6874fb
+--- /dev/null
++++ b/src/tests/phase23-control-tower.test.ts
+@@ -0,0 +1,140 @@
++import assert from "node:assert";
++import test, { describe, it } from "node:test";
++import { SeoControlTower } from "../services/seo/seo-control-tower.js";
++import { SeoChangeOrchestrator, ChangeRequest } from "../services/seo/seo-change-orchestrator.js";
++
++describe("Phase 23: SEO Control Tower & Change Orchestrator", () => {
++
++  describe("SeoControlTower", () => {
++    it("should correctly detect delta and semantic changes", () => {
++      const tower = new SeoControlTower();
++      
++      const obs1 = {
++        id: "kw-001",
++        keyword: "test keyword",
++        rank: 10,
++        clicks: 100,
++        impressions: 1000,
++        semanticSignature: "sig-A",
++        timestamp: "2023-10-01T00:00:00Z"
++      };
++
++      const delta1 = tower.recordObservation(obs1);
++      assert.strictEqual(delta1.semanticChange, true); // First time
++      assert.strictEqual(tower.llmCallCount, 1);
++      
++      const obs2 = {
++        ...obs1,
++        rank: 8,
++        clicks: 110,
++        semanticSignature: "sig-A", // Same signature
++        timestamp: "2023-10-02T00:00:00Z"
++      };
++
++      const delta2 = tower.recordObservation(obs2);
++      assert.strictEqual(delta2.semanticChange, false);
++      assert.strictEqual(delta2.rankDelta, 2); // 10 - 8 = 2 (improved)
++      assert.strictEqual(delta2.clicksDelta, 10);
++      assert.strictEqual(tower.llmCallCount, 1); // Not incremented
++
++      const obs3 = {
++        ...obs1,
++        semanticSignature: "sig-B", // Changed signature
++        timestamp: "2023-10-03T00:00:00Z"
++      };
++      
++      const delta3 = tower.recordObservation(obs3);
++      assert.strictEqual(delta3.semanticChange, true);
++      assert.strictEqual(tower.llmCallCount, 2); // Incremented
++    });
++
++    it("should limit the daily decision basket to 3-5 recommendations", () => {
++        const tower = new SeoControlTower();
++        const recs = [
++            { id: "1", action: "A", keyword: "K1", expectedImpact: "High" },
++            { id: "2", action: "B", keyword: "K2", expectedImpact: "High" },
++            { id: "3", action: "C", keyword: "K3", expectedImpact: "Medium" },
++            { id: "4", action: "D", keyword: "K4", expectedImpact: "Medium" },
++            { id: "5", action: "E", keyword: "K5", expectedImpact: "Low" },
++            { id: "6", action: "F", keyword: "K6", expectedImpact: "Low" },
++        ];
++
++        const basket5 = tower.generateDailyDecisionBasket(recs);
++        assert.strictEqual(basket5.length, 5);
++
++        const basket3 = tower.generateDailyDecisionBasket(recs, 2);
++        assert.strictEqual(basket3.length, 3); // Enforce min 3
++
++        const basketMax = tower.generateDailyDecisionBasket(recs, 10);
++        assert.strictEqual(basketMax.length, 5); // Enforce max 5
++        
++        const shortRecs = recs.slice(0, 2);
++        const basketShort = tower.generateDailyDecisionBasket(shortRecs);
++        assert.strictEqual(basketShort.length, 2); // Should not pad if there are fewer than 3
++    });
++  });
++
++  describe("SeoChangeOrchestrator", () => {
++    it("should enforce cooldown validation", () => {
++      const orchestrator = new SeoChangeOrchestrator();
++      const now = Date.now();
++      
++      const request1: ChangeRequest = {
++        id: "req-001",
++        targetId: "prod-001",
++        beforeContent: "Hello",
++        afterContent: "Hello World",
++        timestamp: now
++      };
++
++      const result1 = orchestrator.executeChange(request1);
++      assert.strictEqual(result1.success, true);
++      
++      const request2: ChangeRequest = {
++        ...request1,
++        id: "req-002",
++        afterContent: "Hello World Again",
++        timestamp: now + 1000 * 60 * 60 // 1 hour later
++      };
++
++      const result2 = orchestrator.executeChange(request2);
++      assert.strictEqual(result2.success, false);
++      assert.strictEqual(result2.reason, "Cooldown period has not elapsed for this target.");
++    });
++
++    it("should enforce SeoPolicyGuard negative keywords", () => {
++        const orchestrator = new SeoChangeOrchestrator();
++        const now = Date.now();
++        
++        const request: ChangeRequest = {
++          id: "req-003",
++          targetId: "prod-002",
++          beforeContent: "Safe content",
++          afterContent: "มี อย. รับประกัน",
++          timestamp: now
++        };
++  
++        const result = orchestrator.executeChange(request);
++        assert.strictEqual(result.success, false);
++        assert.ok(result.rejectedKeywords?.includes("อย."));
++    });
++
++    it("should successfully orchestrate valid changes and generate fingerprint", () => {
++        const orchestrator = new SeoChangeOrchestrator();
++        const now = Date.now();
++        
++        const request: ChangeRequest = {
++          id: "req-004",
++          targetId: "prod-003",
++          beforeContent: "Old title",
++          afterContent: "New optimized title",
++          timestamp: now
++        };
++  
++        const result = orchestrator.executeChange(request);
++        assert.strictEqual(result.success, true);
++        assert.ok(result.fingerprint);
++    });
++  });
++
++});
+diff --git a/src/tools/gateway.ts b/src/tools/gateway.ts
+index c054d71..f8e033d 100644
+--- a/src/tools/gateway.ts
++++ b/src/tools/gateway.ts
+@@ -33,6 +33,7 @@ import { handleEcommerceBatchUpdatePriceStock } from "./batch-update.js";
+ import { handleEcommerceAuditLog } from "./audit-log.js";
+ import { handleEcommerceWeaveArticleCluster } from "./article-cluster-weaver-tool.js";
+ import { handleEcommerceTrackRankDrift } from "./serp-rank-drift-tool.js";
++import { handleEcommerceSeoControlTower, handleEcommerceSeoChangeOrchestrator } from "./seo-control-tower-tools.js";
+ import { handleEcommerceProductSearch } from "./ecommerce-search.js";
+ import { handleEcommerceUpdatePriceStock } from "./ecommerce-update.js";
+ import { handleEcommerceSafetyGuard } from "./safety-guard.js";
+@@ -89,6 +90,18 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
+     description: "Track brand mentions, backlinks, and correlate with drift",
+     handler: handleEcommerceMentionObservationLedger
+   },
++  seo_control_tower: {
++    action: "seo_control_tower",
++    category: "seo",
++    description: "SEO Evidence Control Tower & Authorized Change Orchestrator",
++    handler: handleEcommerceSeoControlTower
++  },
++  seo_change_orchestrator: {
++    action: "seo_change_orchestrator",
++    category: "seo",
++    description: "Orchestrate exact SEO changes with policy enforcement",
++    handler: handleEcommerceSeoChangeOrchestrator
++  },
+   list_actions: {
+     action: "list_actions",
+     category: "system",
+diff --git a/src/tools/seo-control-tower-tools.ts b/src/tools/seo-control-tower-tools.ts
+new file mode 100644
+index 0000000..dc3a765
+--- /dev/null
++++ b/src/tools/seo-control-tower-tools.ts
+@@ -0,0 +1,67 @@
++import { SeoControlTower, Observation, Recommendation } from "../services/seo/seo-control-tower.js";
++import { SeoChangeOrchestrator, ChangeRequest } from "../services/seo/seo-change-orchestrator.js";
++
++const controlTower = new SeoControlTower();
++const changeOrchestrator = new SeoChangeOrchestrator();
++
++export async function handleEcommerceSeoControlTower(args: any) {
++  const { action, observation, recommendations, limit } = args;
++
++  try {
++    if (action === "record_observation") {
++      if (!observation) {
++        return { isError: true, content: [{ type: "text", text: "Missing observation data" }] };
++      }
++      const result = controlTower.recordObservation(observation as Observation);
++      return {
++        content: [{
++          type: "text",
++          text: JSON.stringify({ status: "success", result, llmCallCount: controlTower.llmCallCount })
++        }]
++      };
++    } else if (action === "generate_basket") {
++      if (!recommendations || !Array.isArray(recommendations)) {
++        return { isError: true, content: [{ type: "text", text: "Missing or invalid recommendations data" }] };
++      }
++      const result = controlTower.generateDailyDecisionBasket(recommendations as Recommendation[], limit);
++      return {
++        content: [{
++          type: "text",
++          text: JSON.stringify({ status: "success", basket: result })
++        }]
++      };
++    } else if (action === "clear_cache") {
++      controlTower.clearCache();
++      return {
++        content: [{
++          type: "text",
++          text: JSON.stringify({ status: "success", message: "Observation cache cleared" })
++        }]
++      };
++    } else {
++        return { isError: true, content: [{ type: "text", text: "Invalid action" }] };
++    }
++  } catch (error: any) {
++    return { isError: true, content: [{ type: "text", text: error.message }] };
++  }
++}
++
++export async function handleEcommerceSeoChangeOrchestrator(args: any) {
++  const { request } = args;
++
++  if (!request) {
++    return { isError: true, content: [{ type: "text", text: "Missing change request data" }] };
++  }
++
++  try {
++    const result = changeOrchestrator.executeChange(request as ChangeRequest);
++    return {
++      content: [{
++        type: "text",
++        text: JSON.stringify({ status: "success", result })
++      }]
++    };
++  } catch (error: any) {
++    return { isError: true, content: [{ type: "text", text: error.message }] };
++  }
++}
