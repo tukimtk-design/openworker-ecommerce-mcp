@@ -3,6 +3,7 @@ import {
   handleEcommercePublisherRelevanceFilter,
   handleEcommerceMentionObservationLedger
 } from "./tools/authority-engine-tools.js";
+import { handleEcommerceSeoControlTower, handleEcommerceSeoChangeOrchestrator } from "./tools/seo-control-tower-tools.js";
 import { handleEcommerceM365CopilotBridge } from "./tools/m365-copilot-bridge.js";
 import { handleEcommerceSeoOptimizer } from "./tools/seo-optimizer.js";
 import { handleEcommerceOwLnwshopSafeSeoUpdater } from "./tools/lnwshop-seo-updater.js";
@@ -1071,6 +1072,65 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["action"]
         }
+      },
+      {
+        name: "ecommerce_seo_control_tower",
+        description: "SEO Evidence Control Tower & Authorized Change Orchestrator",
+        inputSchema: {
+          type: "object",
+          properties: {
+            action: { type: "string", enum: ["record_observation", "generate_basket", "clear_cache"] },
+            observation: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                keyword: { type: "string" },
+                rank: { type: "number" },
+                clicks: { type: "number" },
+                impressions: { type: "number" },
+                semanticSignature: { type: "string" },
+                timestamp: { type: "string" }
+              },
+              required: ["id", "keyword", "rank", "clicks", "impressions", "semanticSignature", "timestamp"]
+            },
+            recommendations: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  action: { type: "string" },
+                  keyword: { type: "string" },
+                  expectedImpact: { type: "string" }
+                },
+                required: ["id", "action", "keyword", "expectedImpact"]
+              }
+            },
+            limit: { type: "number" }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "ecommerce_seo_change_orchestrator",
+        description: "Orchestrate exact SEO changes with policy enforcement",
+        inputSchema: {
+          type: "object",
+          properties: {
+            request: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                targetId: { type: "string" },
+                beforeContent: { type: "string" },
+                afterContent: { type: "string" },
+                timestamp: { type: "number" }
+              },
+              required: ["id", "targetId", "beforeContent", "afterContent", "timestamp"]
+            }
+          },
+          required: ["request"]
+        }
       }
     ],
   };
@@ -1233,6 +1293,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleEcommercePublisherRelevanceFilter(args);
     case "ecommerce_mention_observation_ledger":
       return await handleEcommerceMentionObservationLedger(args);
+    case "ecommerce_seo_control_tower":
+      return await handleEcommerceSeoControlTower(args);
+    case "ecommerce_seo_change_orchestrator":
+      return await handleEcommerceSeoChangeOrchestrator(args);
 
     default:
       return {
